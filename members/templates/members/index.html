@@ -1,0 +1,18 @@
+{% extends "members/base.html" %}
+
+{% block title %}   Members Site{% endblock %}
+{% block head %}    Members Site{% endblock %}
+
+{% block content %}
+    {% if user.handle %}
+    <p>Welcome</p>
+    <p> {{ user.handle }}</p>
+    <p>{{message}}</p>
+  {% else %}
+    <p>Welcome anonymous person form the inter webs.
+      You need to <a href="/login">login</a> or <a href="/register">register</a> 
+      before you can proceeed.</p>
+    <p></p>
+    <p></p>
+  {% endif %}
+{% endblock %}

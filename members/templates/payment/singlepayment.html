@@ -1,0 +1,55 @@
+{% extends "members/base.html" %}
+
+{% block title %} Members Site{% endblock %}
+{% block head %}  Members Site{% endblock %}
+
+   
+{% block content %}
+<div align="left"> 
+<p>Please provided a payment to DC801 via this form. </p>
+<p>All card information will be sent directly to braintreepayments.com and no credt card data is stored on this site.</p>
+<p>Please refer to braintrees pci faq for more information.</p>
+<p><a href='https://www.braintreepayments.com/faq'>https://www.braintreepayments.com/faq</a></p>
+
+<p></h2>Payment Status</h2></p>
+<p></h2><strong>{{message}}</strong></h2></p>
+    <div>
+      <form action="/payment/" method="POST" id="braintree-payment-form">
+        {% csrf_token %}
+        <p>
+            <label>Amount: </label>
+          <!--  <input type="text" size="7" autocomplete="off" name='amount'/> -->
+            <select name="payment_level">
+              <option value="1">Member $50.00</option>
+              <option value="2">Root $75.00</option>
+              <option value="3">Super Root $100</option>
+              <option value="4">Super Duper Supporter $200</option>
+            </select> 
+        </p>
+
+        <p>
+          <label>Card Number: </label>
+          <input type="text" size="20" autocomplete="off" data-encrypted-name="number" />
+        </p>
+        <p>
+          <label>CVV: </label>
+          <input type="text" size="4" autocomplete="off" data-encrypted-name="cvv" />
+        </p>
+        <p>
+          <label>Expiration (MM/YYYY)</label>
+          <input type="text" size="2" name="month" /> / <input type="text" size="4" name="year" />
+          </p>
+          <p>
+          <label>Payment Notes</label>
+          <textarea cols="40" rows="5" name="myname"></textarea>
+          </p>
+        <input type="submit" id="submit" value = 'Submit' />
+      </form>
+    </div>
+    <script src="https://js.braintreegateway.com/v1/braintree.js"></script>
+    <script>
+      var braintree = Braintree.create("{{client_side_key}}");
+      braintree.onSubmitEncryptForm('braintree-payment-form');
+    </script>
+</div>
+{% endblock %}
