@@ -64,7 +64,7 @@ class DC801User(AbstractBaseUser,PermissionsMixin):
     objects      = DC801UserManager()
     first_name   = models.CharField(max_length=254, blank=True)
     last_name    = models.CharField(max_length=254, blank=True)
-    member_level = models.ForeignKey('MemberLevel',default=2)
+    member_level = models.ForeignKey('MemberLevel',default=1)
     phone_number = models.CharField(max_length=11, blank=True)
 
 
@@ -125,7 +125,7 @@ class BrainTree(models.Model):
     public_key  = settings.BRAINTREE_PUBLIC_KEY
     private_key = settings.BRAINTREE_PRIVATE_KEY
 
-    braintree.Configuration.configure(braintree.Environment.Sandbox,
+    braintree.Configuration.configure(braintree.Environment.Production,
                                     merchant_id   = merchant_id,
                                     public_key    = public_key,
                                     private_key   = private_key)
@@ -137,43 +137,50 @@ class BrainTree(models.Model):
     def create_transaction(self,payment,user):
         #user = DC801User.objects.get(id=user.id)
         now = timezone.now()
-        result = braintree.Transaction.sale({
+        result = None
+        try:
+            result = braintree.Transaction.sale({
 
-            "amount"                : payment['amount'],
-            "credit_card": {
-                "number"            : payment['account'],
-                "cvv"               : payment["cvv"],
-                "expiration_month"  : payment["month"],
-                "expiration_year"   : payment["year"]
+                "amount"                : payment['amount'],
+                "credit_card": {
+                    "number"            : payment['account'],
+                    "cvv"               : payment["cvv"],
+                    "expiration_month"  : payment["month"],
+                    "expiration_year"   : payment["year"]
 
-            },
-            "customer":{
-                'first_name':user.first_name,
-                'last_name':user.last_name,
-                'email':user.email,
-            },
-            "options": {
-                "submit_for_settlement": "True",
-            }
-        })
-        if result.is_success:
-            transaction = Transaction(user = user,
-                                            amount=payment['amount'],
-                                            payment_date=now,
-                                            timestamp=time.time(),
-                                            success=1,
-                                            )
-            transaction.save()
-            return transaction
-        else:
-            transaction = Transaction(user = user,
-                                            amount=payment['amount'],
-                                            payment_date=now,
-                                            timestamp=time.time(),
-                                            success=0
-                                            )
-            transaction.save()
-            return transaction
+                },
+                "customer":{
+                    'first_name':user.first_name,
+                    'last_name':user.last_name,
+                    'email':user.email,
+                },
+                "options": {
+                    "submit_for_settlement": True,
+                }
+            })
+
+            if result.is_success:
+                transaction = Transaction(user = user,
+                                                amount=payment['amount'],
+                                                payment_date=now,
+                                                timestamp=time.time(),
+                                                success=1,
+                                                )
+                transaction.save()
+                return transaction
+            else:
+                transaction = Transaction(user = user,
+                                                amount=payment['amount'],
+                                                payment_date=now,
+                                                timestamp=time.time(),
+                                                success=0
+                                                )
+                transaction.save()
+                return transaction
+        except Exception,ex:
+            f = open('/tmp/payment_errors','w')
+            f.write(repr(ex))
+            f.close()
 
     def create_customer(self,customer):
 

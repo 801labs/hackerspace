@@ -14,6 +14,7 @@ class RegistrationForm(forms.Form):
     password1 = forms.CharField(
       label='Password',
       widget=forms.PasswordInput(attrs={'size':'35'})
+      ,help_text = '<br/><p>Password must contain at least one lower chracter, </br>one uppercase character, at least one number, at least one special charater,</br> and be longer than eight charaters.</p>'
     )
     password2 = forms.CharField(
       label='Password (Again)',
@@ -21,7 +22,7 @@ class RegistrationForm(forms.Form):
     )
 
     email           = forms.EmailField(label='Email',widget=forms.TextInput(attrs={'size':'35'}), max_length=254)
-    phone_number    = forms.CharField(label='Phone Number',widget=forms.TextInput(attrs={'size':'11'}),max_length=11)
+    phone_number    = forms.CharField(label='Phone Number',widget=forms.TextInput(attrs={'size':'11'}),max_length=11,help_text = "<p>Please format the phone number as 1801NXXNXXX <br/>(remember to put the 1 before the area code)</p>")
     first_name      = forms.CharField(label='First Name',widget=forms.TextInput(attrs={'size':'35'}),max_length=254)
     last_name       = forms.CharField(label='Last Name',widget=forms.TextInput(attrs={'size':'35'}),max_length=254)
     
@@ -98,9 +99,10 @@ class RegistrationForm(forms.Form):
       if 'password1' in self.cleaned_data:
         password1 = self.cleaned_data['password1']
         password2 = self.cleaned_data['password2']
-
+        
         if password1 == password2:
-            if not re.search(r'^(?=.*[0-9]+.*)(?=.*[a-z]+.*)(?=.*[A-Z]+.*)(?=.*[!@#$%&*~]+.*)[0-9a-zA-Z!@#$%^&*~]{8,}$',password1):
+
+            if not re.search(r'^(?=.*[0-9]+.*)(?=.*[a-z]+.*)(?=.*[A-Z]+.*)(?=.*[\!\@\#\$\%\&\*\(\)\[\]\;\'\-\_\+\=\{\}\[\]\?\<\>\.\,\|]+.*)[0-9a-zA-Z\!\@\#\$\%\&\*\~\*\(\)\[\]\;\'\-\_\+\=\{\}\[\]\?\<\>\.\,\|]{8,}',password1):
                 raise forms.ValidationError('Password must contain at least one lower chracter, one uppercase character, at least one number, at least one special charater, and be longer than eight charaters.')
             else:
                 return password2

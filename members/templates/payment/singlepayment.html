@@ -6,13 +6,20 @@
    
 {% block content %}
 <div align="left"> 
+
+
+
 <p>Please provided a payment to DC801 via this form. </p>
 <p>All card information will be sent directly to braintreepayments.com and no credt card data is stored on this site.</p>
-<p>Please refer to braintrees pci faq for more information.</p>
+<p>Please refer to braintree's pci faq for more information.</p>
 <p><a href='https://www.braintreepayments.com/faq'>https://www.braintreepayments.com/faq</a></p>
+<p>All payments will show as THE TRANSISTOR, LLC for now which will change hopefully next year.</p>
+<p><h3>Refund Policy:</h3> Currently we do not issue refunds, but if you do have an issue with your payment pleaes call (385) 313-0801 and leave a voicemail.</p>
 
-<p></h2>Payment Status</h2></p>
-<p></h2><strong>{{message}}</strong></h2></p>
+
+<p></h2>Payment Status:</h2></p>
+
+<p></h2><strong><div class="alert alert-danger">{{message}}</div></strong></h2></p>
     <div>
       <form action="/payment/" method="POST" id="braintree-payment-form">
         {% csrf_token %}
@@ -22,8 +29,8 @@
             <select name="payment_level">
               <option value="1">Member $50.00</option>
               <option value="2">Root $75.00</option>
-              <option value="3">Super Root $100</option>
-              <option value="4">Super Duper Supporter $200</option>
+              <option value="3">Super Root $100.00</option>
+              <option value="4">Super Duper Supporter $200.00</option>
             </select> 
         </p>
 
