@@ -1,0 +1,183 @@
+{% extends "members/base.html" %}
+
+{% block title %} Members Site{% endblock %}
+{% block head %}  Members Site{% endblock %}
+
+{% block content %}
+
+ <script>
+     function delete_card(token){
+            console.log(token);
+
+            var input = document.createElement("input");
+            input.setAttribute("type", "hidden");
+            input.setAttribute("name", "delete_token");
+            input.setAttribute("value", token);
+
+            //append to form element that you want .
+            document.getElementById("braintree-subscribe-form").appendChild(input);
+
+
+            document.getElementById("braintree-subscribe-form").subscribe_method.value = 'delete_card';
+            console.log(document.getElementById("braintree-subscribe-form").subscribe_method);
+            document.getElementById("braintree-subscribe-form").submit();
+    }
+
+
+  </script>
+
+
+
+{% if info_messages != None %}
+    {% for info_message in info_messages %}
+    <div class="alert alert-info" style="width:800px;">
+        {{info_message}}
+    </div>
+    {% endfor %}
+
+{% endif %}
+{% if success_messages != None %}
+
+    {% for success_message in success_messages %}
+    <div class="alert alert-success" style="width:800px;">
+        {{success_message}}
+    </div>
+    {%endfor%}
+
+{% endif %}
+{% if error_messages != None  %}
+
+    {% for error_message in error_messages %}
+    <div class="alert alert-warning" style="width:800px;">
+        {{error_message}}
+    </div>
+    {% endfor%}
+
+{% endif %}
+
+<h1>801 Labs Recurring Membership Plans</h1>
+{% if subscription != None  %}
+    <div class="alert alert-info" style="width:800px;">
+
+        <p align='center'>Current Plan</p>
+        <table align='center' >
+            <tr>
+            <td>
+                <p> Plan : <b>{{subscription.plan_id}}</b>
+                Payment Amount: <b>${{subscription.next_billing_period_amount}}</b>
+                Next Billing Date: <b>{{subscription.next_billing_date}}</b>
+                </p>
+            </td>
+            <td align='right'>
+
+                <form action="/subscriptions/" method="POST" id="braintree-cancel-subscription-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="method" value="cancel">
+                    <input type="submit" class="btn btn-danger" value='Cancel'>
+                </form>
+            </td>
+            </tr>
+        </table>
+    </div>
+    {% endif %}
+
+
+    {% if plans != None  %}
+
+
+    
+    <div style="width:800px;">
+
+    <table class="table table-striped" align="center">
+        <tr>
+            <th>Plan Name</th>
+            <th>Plan Price</th>
+            <th>Plan Description</th>
+        </tr>
+            {% for plan in plans %}
+            <tr><td>{{plan.name}}</td><td>${{plan.price}}</td><td>{{plan.description}}</td></tr>
+            {% endfor %}
+        </table>    
+    </div>
+    {% endif %}
+ 
+    {% if cards != None %}
+    <br/>
+    <h2>Stored Cards</h2>
+    <form action="/subscriptions/" method="POST" id="braintree-subscribe-form">
+
+        <input type="hidden" name="method" value="subscribe" id="subscribe_method"/>
+
+        <div style="width:400px;">
+        <table class="table table-responsive" align="center" >
+            <tr>
+            <th>Select Card For Subscription</th>
+            <th>Remove Card</th>
+            </tr>
+        
+            {% csrf_token %}
+            {% for token in cards %}
+            <tr>
+                <td><input type="radio" name="card_token" value="{{token.token}}"> {{token.card_type}} {{token.last_4}}</td>
+                <td><input type="button" name="delete_token" value="Delete" onClick="delete_card('{{token.token}}');"></br></td>
+            </tr>
+            {% endfor %}
+            <tr><td>
+            {%if plans != None %}
+               <select name="plan_id" class="form-control">
+                {% for plan in plans %}
+                <option value="{{plan.id}}">{{plan.name}} {{plan.price}}</option>
+                {% endfor %}
+                </select>
+                {%endif%}
+                </td>
+
+                <td><input class="submit-button" type="submit"  value="Subscribe" /></td>
+            </tr>
+        </table>
+        </div>
+     
+        </form>
+
+    {% endif %}
+
+    <form action="/subscriptions/" method="POST" id="braintree-payment-form">
+
+     <input type="hidden" name="method" value="addcard">
+        {% csrf_token %}
+    <h2>Add Card To Stored Cards</h2>
+      <p>
+        <label>First Name</label>
+        <input type="text" name="first_name" id="first_name">
+      </p>
+      <p>
+        <label for="last_name">Last Name</label>
+        <input type="text" name="last_name" id="last_name">
+      </p>
+      <p>
+        <label for="postal_code">Postal Code</label>
+        <input type="text" name="postal_code" id="postal_code">
+      </p>
+      <p>
+        <label>Card Number</label>
+        <input type="text" size="20" autocomplete="off" data-encrypted-name="account" />
+      </p>
+      <p>
+        <label>CVV</label>
+        <input type="text" size="4" autocomplete="off" data-encrypted-name="cvv" />
+      </p>
+      <p>
+        <label>Expiration (MM/YYYY)</label>
+        <input type="text" size="2" data-encrypted-name="month" /> / <input type="text" size="4" data-encrypted-name="year" />
+      </p>
+      <input class="submit-button" type="submit" value="Add Card" />
+    </form>
+    <script src="https://js.braintreegateway.com/v1/braintree.js"></script>
+    <script>
+      var braintree = Braintree.create("{{client_side_key}}");
+      braintree.onSubmitEncryptForm("braintree-payment-form");
+  </script>
+
+
+
+{% endblock %}

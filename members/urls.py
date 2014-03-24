@@ -13,7 +13,7 @@ urlpatterns = patterns('',
     url(r'^register/success/$', views.register_success,name='success'),
     #url(r'^member/$', views.member,name='member'),
     url(r'^payment/$', views.payment,name='payment'),
-    url(r'^create_customer/$', views.create_customer,name='create_customer')
+    url(r'^subscriptions/$', views.subscriptions,name='subscriptions')
 
     #{ 'template': 'registration/register_success.html' }),
     #(r'^site_media/(?P<path>.*)$', 'django.views.static.serve',

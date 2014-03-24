@@ -1,6 +1,8 @@
 from django.db import models
 import braintree
 import time
+import random
+import string
 from django.utils import timezone
 from django.utils.http import urlquote
 from django.utils.translation import ugettext_lazy as _
@@ -20,6 +22,8 @@ class DC801UserManager(BaseUserManager):
         now = timezone.now()
         if not email:
             raise ValueError('The given email must be set')
+        confirmation_code = ''.join(random.choice(string.ascii_uppercase + string.digits + string.ascii_lowercase) for x in range(33))
+
         email = self.normalize_email(email)
         user = self.model(email=email,
                         handle=handle,
@@ -30,9 +34,11 @@ class DC801UserManager(BaseUserManager):
                         first_name=first_name,
                         last_name=last_name,
                         phone_number=phone_number,
+                        confirmation_code=confirmation_code,
                         )
         user.set_password(password)
         user.save(using=self._db)
+        self.send_registration_confirmation(handle,email,confirmation_code)
         return user
 
     def create_user(self, email, handle, password=None, first_name=None, last_name=None, phone_number=None):
@@ -41,8 +47,19 @@ class DC801UserManager(BaseUserManager):
     def create_superuser(self, email, handle, password, first_name=None, last_name=None, phone_number=None):
         return self._create_user(email,handle, password, True, first_name, last_name,phone_number)
 
+    def send_registration_confirmation(self,handle,email,confirmation_code):
+
+        title = "801 labs account confirmation"
+        content = "http://www.801labs.org/confirm/" + str(confirmation_code) + "/" + handle
+        try:
+            send_mail(title, content, 'no-reply@801labs.org', [email], fail_silently=False)
+        except Exception,ex:
+            f = open('/tmp/sendmail','w')
+            f.write(repr(ex))
+            f.close()
 
 class MemberLevel(models.Model):
+
     id          = models.AutoField(primary_key=True)
     level       = models.PositiveIntegerField(unique=True)
     name        = models.CharField(max_length=254)
@@ -60,12 +77,14 @@ class DC801User(AbstractBaseUser,PermissionsMixin):
                                             help_text=_('Designates whether this user should be treated as '
                                              'active. Unselect this instead of deleting accounts.'))
     
-    date_joined  = models.DateTimeField(_('date joined'), default=timezone.now)
-    objects      = DC801UserManager()
-    first_name   = models.CharField(max_length=254, blank=True)
-    last_name    = models.CharField(max_length=254, blank=True)
-    member_level = models.ForeignKey('MemberLevel',default=1)
-    phone_number = models.CharField(max_length=11, blank=True)
+    date_joined       = models.DateTimeField(_('date joined'), default=timezone.now)
+    objects           = DC801UserManager()
+    first_name        = models.CharField(max_length=254, blank=True)
+    last_name         = models.CharField(max_length=254, blank=True)
+    member_level      = models.ForeignKey('MemberLevel',default=1)
+    phone_number      = models.CharField(max_length=11, blank=True)
+    confirmation_code = models.CharField(max_length=33)
+    subscription_code = models.CharField(max_length=254)
 
 
     USERNAME_FIELD   = 'email'
@@ -124,14 +143,60 @@ class BrainTree(models.Model):
     merchant_id = settings.BRAINTREE_MERCHANT_ID
     public_key  = settings.BRAINTREE_PUBLIC_KEY
     private_key = settings.BRAINTREE_PRIVATE_KEY
+    braintree_environment = None
 
-    braintree.Configuration.configure(braintree.Environment.Production,
+    if settings.BRAINTREE_ENVIRONMENT == 'sandbox':
+        braintree_environment = braintree.Environment.Sandbox
+
+    if settings.BRAINTREE_ENVIRONMENT == 'production':
+        braintree_environment = braintree.Environment.Production
+
+    braintree.Configuration.configure(braintree_environment,
                                     merchant_id   = merchant_id,
                                     public_key    = public_key,
                                     private_key   = private_key)
     
     def __unicode__(self):  # Python 3: def __str__(self):
         return 'nothing here'
+
+    def delete_card(self,token):
+
+        try:
+            delete_response = braintree.CreditCard.delete(token)
+            return delete_response
+        except Exception,ex:
+            f = open('/tmp/deletecard','w')
+            f.write(repr(ex))
+            f.close()
+            return None
+
+
+
+
+    def get_subscription(self,subscription_id):
+
+        try:
+            subscription = braintree.Subscription.find(subscription_id)
+            return subscription
+        except Exception,ex:
+            f = open('/tmp/subscription_errors','w')
+            f.write(repr(ex))
+            f.close()
+            return None
+
+
+    def cancel_subscription(self,subscription_id):
+
+        try:
+            result = braintree.Subscription.cancel(subscription_id)
+            return result
+        except:
+            f = open('/tmp/subscription_errors','w')
+            f.write(repr(ex))
+            f.close()
+            return None
+
+
 
 
     def create_transaction(self,payment,user):
@@ -182,9 +247,59 @@ class BrainTree(models.Model):
             f.write(repr(ex))
             f.close()
 
+    def get_braintree_customer(self,customer_id):
+
+        try:
+            customer = braintree.Customer.find(customer_id)
+            return customer
+        except braintree.exceptions.NotFoundError:
+            return None
+
+    def addcard_to_customer(self,addcard):
+        try:
+
+            addcard_request = {
+                        "customer_id"       : addcard['customer_id'],
+                        "number"            : addcard['account'],
+                        "expiration_month"  : addcard["month"],
+                        "expiration_year"   : addcard["year"],
+                        "cvv"               : addcard["cvv"],
+                        "cardholder_name"   : addcard['first_name'] + " " + addcard['last_name'],
+                    }
+
+            f = open('/tmp/addcard_request','a')
+            f.write(repr(addcard_request))
+            f.close()
+          
+
+
+            result = braintree.CreditCard.create(addcard_request) 
+
+            f = open('/tmp/addcard_result','a')
+            f.write(repr(result))
+            f.close()
+          
+
+            return result
+        except braintree.exceptions.NotFoundError:
+            return None
+
+    def set_subscriptions(self,card_token,plan_id):
+
+        try:
+            result = braintree.Subscription.create({
+                "payment_method_token": card_token,
+                "plan_id": plan_id
+            })
+            return result
+        except braintree.exceptions.NotFoundError:
+            return None
+
+
     def create_customer(self,customer):
 
         result = braintree.Customer.create({
+            "id": customer['id'],
             "first_name"    : customer["first_name"],
             "last_name"     : customer["last_name"],
             "credit_card"   : {
@@ -199,6 +314,6 @@ class BrainTree(models.Model):
         })
 
         if result.is_success:
-            return True
+            return result
         else:
-            return False
+            return None

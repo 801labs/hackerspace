@@ -39,7 +39,7 @@ class RegistrationForm(forms.Form):
 
     #additional_questions = forms.CharField(label='Additional Questions / Comments ', widget=forms.Textarea)
 
-    captcha = ReCaptchaField(attrs={'theme' : 'clean'})
+    #captcha = ReCaptchaField(attrs={'theme' : 'clean'})
 
     def clean_handle(self):
 
@@ -144,3 +144,5 @@ class DC801UserChangeForm(UserChangeForm):
 
     class Meta:
         model = DC801User
+
+
