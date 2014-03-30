@@ -36,6 +36,7 @@
            <li class="active"><a href="/">Home</a></li>
             {% if user.member_level.level >= 50 %}
                 <li><a href='/payment/'>Payment</a></li>
+                <li><a href='/subscriptions/'>Subscription</a></li>
             {%endif%}
             <li>User: {{user.username}} </li>
             <li><a href="/logout/">Logout</a></li>
