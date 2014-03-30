@@ -27,6 +27,55 @@ def validateEmail( email ):
     except ValidationError:
         return False
 
+def render_subscription(request,messages):
+
+    braintree_customer              = None 
+    braintree_plans                 = None
+    braintree_customer_subscription = None
+    customer_cards                  = None
+
+    braintree_model = BrainTree()
+
+    try:
+        braintree_plans     = braintree.Plan.all() 
+    except Exception,ex:
+        f = open('/tmp/braintree_getcustomer','a')
+        f.write(repr(ex))
+        f.close()
+
+
+    try:
+        braintree_customer  = braintree_model.get_braintree_customer(str(request.user.id))
+    except Exception,ex:
+        f = open('/tmp/braintree_getcustomer','a')
+        f.write(repr(ex))
+        f.close()
+
+    if request.user.subscription_code is not None and request.user.subscription_code != '' and hasattr(request.user, 'subscription_code'):
+        braintree_customer_subscription = braintree_model.get_subscription(request.user.subscription_code)
+
+
+    if braintree_customer is not None and hasattr(braintree_customer, 'credit_cards'):
+        customer_cards = braintree_customer.credit_cards
+
+
+    variables = RequestContext(request,{
+                                        'subscription'      : braintree_customer_subscription,
+                                        'info_messages'     : messages['info_messages'],
+                                        'success_messages'  : messages['success_messages'],
+                                        'error_messages'    : messages['error_messages'],
+                                        'client_side_key'   : client_side_key,
+                                        'cards'             : customer_cards,
+                                        'plans'             : braintree_plans,
+                                        }
+                             )
+
+    return render_to_response('payment/recurring_billing.html', variables)
+
+
+
+
+
 
 def index(request):
 
@@ -39,7 +88,7 @@ def index(request):
         else:
             page_data = {
                     'user':request.user,
-                    'message':'Thank you for registering your account needs to be approved before you can do anything.'
+                    'message':'Thank you for registering your account needs to be approved before you can become a member. Please come down to one of our meetings and hang out in irc http://webchat.freenode.net/ #dc801 chat.freenode.net or www.dc801.org. On Freenode #dc801 ask for Nemus, L34n or Metacortex for more information.'
                     }
             variables = RequestContext(request,page_data)
             return render_to_response('members/index.html', variables)
@@ -57,52 +106,38 @@ def subscriptions(request):
     request.session.modified = True
     braintree_model = BrainTree()
 
-    info_messages       = []
-    error_messages      = []
-    success_messages    = []
+    #info_messages       = []
+    #error_messages      = []
+    #success_messages    = []
+    
+    messages = {}
+    messages['info_messages']       = [];
+    messages['error_messages']      = [];
+    messages['success_messages']    = [];
 
     braintree_customer              = None 
     braintree_plans                 = None
     braintree_customer_subscription = None
     customer_cards                  = None
 
-    f = open('/tmp/subscription_request','a')
-    f.write(repr(request))
-    f.close()
+    #try:
+        #braintree_plans     = braintree.Plan.all() 
+        #braintree_customer  = braintree_model.get_braintree_customer(str(request.user.id))
 
-    try:
-
-        braintree_plans     = braintree.Plan.all() 
-        braintree_customer  = braintree_model.get_braintree_customer(str(request.user.id))
-
-        #f = open('/tmp/braintree_plans','a')
-        #f.write(repr(braintree_plans))
-        #f.close()
-
-        #f = open('/tmp/braintree_customer','a')
-        #f.write(repr(braintree_customer))
-        #f.write("\n")
-        #f.write(dir(braintree_customer))
-        #f.close()
-
-
-    except Exception,ex:
-        f = open('/tmp/braintree_getcustomer','a')
-        f.write(repr(ex))
-        f.close()
+    #except Exception,ex:
+    #    f = open('/tmp/braintree_getcustomer','a')
+    #    f.write(repr(ex))
+    #    f.close()
 
     message = ''
     cards = None
 
-    if braintree_customer is not None and hasattr(braintree_customer, 'credit_cards'):
-        customer_cards = braintree_customer.credit_cards
+    #braintree_customer  = braintree_model.get_braintree_customer(str(request.user.id))
+    #if braintree_customer is not None and hasattr(braintree_customer, 'credit_cards'):
+    #    customer_cards = braintree_customer.credit_cards
 
-    if request.user.subscription_code is not None and request.user.subscription_code != '' and hasattr(request.user, 'subscription_code'):
-        braintree_customer_subscription = braintree_model.get_subscription(request.user.subscription_code)
-        f = open('/tmp/get_subscription','a')
-        f.write(repr(braintree_customer_subscription))
-        f.close()
-
+    #if request.user.subscription_code is not None and request.user.subscription_code != '' and hasattr(request.user, 'subscription_code'):
+    #    braintree_customer_subscription = braintree_model.get_subscription(request.user.subscription_code)
 
 
 
@@ -110,101 +145,49 @@ def subscriptions(request):
 
 
         if request.POST['method'] == 'delete_card':
+        
+            if 'delete_token' not in request.POST or len(request.POST['delete_token']) < 1 :
+                    error_message = "Cannot delete card invalid token sent."
+                    messages['error_messages'].append(error_message)
+                    #render
+                    return render_subscription(request,messages)
 
-            delete_card_token = request.POST['delete_token']
+            #get card token from request
+            delete_card_token = request.POST['delete_token'].strip()
+            
+            #get subscriptions so we we can compair card tokens
+            if request.user.subscription_code is not None and request.user.subscription_code != '' and hasattr(request.user, 'subscription_code'):
+                braintree_customer_subscription = braintree_model.get_subscription(request.user.subscription_code)
 
             if braintree_customer_subscription is not None:
         
                 if braintree_customer_subscription.payment_method_token == delete_card_token:
 
                     error_message = "Cannot delete card tied to subscription \""+braintree_customer_subscription.plan_id+"\". Please cancel subscription first."
-                    error_messages.append(error_message)
+                    messages['error_messages'].append(error_message)
+                    #render
+                    return render_subscription(request,messages)
                     
-                    variables = RequestContext(	request, {      'subscription'      : braintree_customer_subscription,
-                                                                'info_messages'     : info_messages,
-                                                                'success_messages'  : success_messages,
-                                                                'error_messages'    : error_messages,
-                                                                'client_side_key'   : client_side_key,
-                                                                'cards'             : customer_cards,
-                                                                'plans'             : braintree_plans,
-                                                          }
-                                            )
-                else:
-                    delete_card = braintree_model.delete_card(delete_card_token)
 
-                    if delete_card.is_success:
-
-                        success_message = "Succesfully deleted card. "
-                        success_messages.append(info_message)
-                    
-                        variables = RequestContext(	request, {  'subscription'      : braintree_customer_subscription,
-                                                                'info_messages'     : info_messages,
-                                                                'success_messages'  : success_messages,
-                                                                'error_messages'    : error_messages,
-                                                                'client_side_key'   : client_side_key,
-                                                                'cards'             : customer_cards,
-                                                                'plans'             : braintree_plans,
-                                                          }
-                                            )
-                    else: 
-
-                        error_message = "Could not delete card. "
-                        error_messages.append(error_message)
-                    
-                        variables = RequestContext(	request, {  'subscription'      : braintree_customer_subscription,
-                                                                'info_messages'     : info_messages,
-                                                                'success_messages'  : success_messages,
-                                                                'error_messages'    : error_messages,
-                                                                'client_side_key'   : client_side_key,
-                                                                'cards'             : customer_cards,
-                                                                'plans'             : braintree_plans,
-                                                          }
-                                            )
-
-                        
-
-            else:
-
-                delete_card_response = braintree_model.delete_card(delete_card_token)
-                f = open('/tmp/deletecard_request','a')
-                f.write(repr(delete_card_response))
-                f.close()
+            delete_card_response = braintree_model.delete_card(delete_card_token)
                 
-                if delete_card_response.is_success:
-                    success_message = "Succesfully deleted card. "
-                    success_messages.append(success_message)
-                    
-                    variables = RequestContext(	request, {  'subscription'      : braintree_customer_subscription,
-                                                            'info_messages'     : info_messages,
-                                                            'success_messages'  : success_messages,
-                                                            'error_messages'    : error_messages,
-                                                            'client_side_key'   : client_side_key,
-                                                            'cards'             : customer_cards,
-                                                            'plans'             : braintree_plans,
-                                                          }
-                                            )
+            if delete_card_response.is_success:
+                success_message = "Succesfully deleted card. "
+                messages['success_messages'].append(success_message)
 
-                else:
-                    error_message = "Could not delete card. "
-                    error_messages.append(error_message)
-                    
-                    variables = RequestContext(	request, {  'subscription'      : braintree_customer_subscription,
-                                                            'info_messages'     : info_messages,
-                                                            'success_messages'  : success_messages,
-                                                            'error_messages'    : error_messages,
-                                                            'client_side_key'   : client_side_key,
-                                                            'cards'             : customer_cards,
-                                                            'plans'             : braintree_plans,
-                                                          }
-                                            )
-
-
-
-
- 
+                #render
+                return render_subscription(request,messages)
+                
+            else:
+                error_message = "Could not delete card. "
+                messages['error_messages'].append(error_message)
+                return render_subscription(request,messages)
 
         if request.POST['method'] == 'cancel':
 
+            #get subscription
+            if request.user.subscription_code is not None and request.user.subscription_code != '' and hasattr(request.user, 'subscription_code'):
+                braintree_customer_subscription = braintree_model.get_subscription(request.user.subscription_code)
 
             if braintree_customer_subscription is not None:
 
@@ -212,78 +195,58 @@ def subscriptions(request):
                 if cancel_result.is_success:
 
                     info_message = "Old Subscription \""+braintree_customer_subscription.plan_id+"\" Canceled. "
-                    info_messages.append(info_message)
+                    messages['info_messages'].append(info_message)
 
                     request.user.subscription_code = None
                     request.user.save()
                     braintree_customer_subscription = None
 
-                    variables = RequestContext(	request, {  'subscription'      : braintree_customer_subscription,
-                                                            'info_messages'     : info_messages,
-                                                            'success_messages'  : success_messages,
-                                                            'error_messages'    : error_messages,
-                                                            'client_side_key'   : client_side_key,
-                                                            'cards'             : customer_cards,
-                                                            'plans'             : braintree_plans,
-                                                        }
-                                            )
+                    return render_subscription(request,messages)
 
-                    return render_to_response('payment/recurring_billing.html', RequestContext(request,variables))
                 else:
                     info_message =  "Old Subscription was NOT \""+braintree_customer_subscription.plan_id+"\" Canceled please call (385) 313-0801 and leave a voicemail. "
-                    info_messages.append(info_message)
-                    variables = RequestContext(	request, {  'subscription'      : braintree_customer_subscription,
-                                                            'info_messages'     : info_messages,
-                                                            'success_messages'  : success_messages,
-                                                            'error_messages'    : error_messages,
-                                                            'client_side_key'   : client_side_key,
-                                                            'cards'             : customer_cards,
-                                                            'plans'             : braintree_plans,
-                                                        }
-                                            )
+                    messages['info_messages'].append(info_message)
 
-                    return render_to_response('payment/recurring_billing.html', RequestContext(request,variables))
-
- 
-
+                    return render_subscription(request,messages)
             else:
                 info_message = "You do not have a Subcription to Cancel. "
-                info_messages.append(info_message)
+                messages['info_messages'].append(info_message)
 
-                variables = RequestContext(	request, {      'subscription'      : braintree_customer_subscription,
-                                                            'info_messages'     : info_messages,
-                                                            'success_messages'  : success_messages,
-                                                            'error_messages'    : error_messages,
-                                                            'client_side_key'   : client_side_key,
-                                                            'cards'             : customer_cards,
-                                                            'plans'             : braintree_plans,
-                                                        }
-                                            )
-
-                return render_to_response('payment/recurring_billing.html', RequestContext(request,variables))
+                return render_subscription(request,messages)
  
-
-
-
 
         if request.POST['method'] == 'subscribe':
 
-            card_token = request.POST['card_token']
-            plan_id    = request.POST['plan_id']
+            subscribe_error = False
+
+            if 'card_token' not in request.POST or len(request.POST['card_token']) < 1:
+                    error_message = "Cannot create subscription invalid card token."
+                    messages['error_messages'].append(error_message)
+                    subscribe_error = True
+                    
+
+            if 'plan_id' not in request.POST or len(request.POST['plan_id']) < 1:
+                    error_message = "Cannot create subscriptions user card invalid plan_id."
+                    messages['error_messages'].append(error_message)
+                    subscribe_error = True
+                
+
+            if subscribe_error:
+                    return render_subscription(request,messages)
+
+            #get data
+            card_token = request.POST['card_token'].strip()
+            plan_id    = request.POST['plan_id'].strip()
+
+
+            if request.user.subscription_code is not None and request.user.subscription_code != '' and hasattr(request.user, 'subscription_code'):
+                braintree_customer_subscription = braintree_model.get_subscription(request.user.subscription_code)
 
             if braintree_customer_subscription is not None:
 
                     error_message = "Please cancel subscription \""+braintree_customer_subscription.plan_id+"\" before creating a new one. "
-                    error_messages.append(error_message)
-                    variables = RequestContext(	request, {      'subscription'      : braintree_customer_subscription,
-                                                                'info_messages'     : info_messages,
-                                                                'success_messages'  : success_messages,
-                                                                'error_messages'    : error_messages,
-                                                                'client_side_key'   : client_side_key,
-                                                                'cards'             : customer_cards,
-                                                                'plans'             : braintree_plans,
-                                                          }
-                                            )
+                    messages['error_messages'].append(error_message)
+                    return render_subscription(request,messages)
  
             else:
 
@@ -296,52 +259,81 @@ def subscriptions(request):
 
                         braintree_customer_subscription  = subscription_response.subscription
                         success_message     = message +  " New Subscription \""+subscription_response.subscription.plan_id+"\" Successful Set"
-                        success_messages.append(success_message)
+                        messages['success_messages'].append(success_message)
 
-                        variables = RequestContext(	request, {  'subscription'      : braintree_customer_subscription,
-                                                                'info_messages'     : info_messages,
-                                                                'success_messages'  : success_messages,
-                                                                'error_messages'    : error_messages,
-                                                                'client_side_key'   : client_side_key,
-                                                                'cards'             : customer_cards,
-                                                                'plans'             : braintree_plans,
-                                                          }
-                                     )
-
-                        return render_to_response('payment/recurring_billing.html', RequestContext(request,variables))
+                        return render_subscription(request,messages)
      
 
                 else:
-                        message = message + 'Setting Subscription Failed'
-
-                        variables = RequestContext(	request, {  'subscription'      : braintree_customer_subscription,
-                                                                'info_messages'     : info_messages,
-                                                                'success_messages'  : success_messages,
-                                                                'error_messages'    : error_messages,
-                                                                'client_side_key'   : client_side_key,
-                                                                'cards'             : customer_cards,
-                                                                'plans'             : braintree_plans,
-                                                            }
-                                                )
-
-                        return render_to_response('payment/recurring_billing.html', RequestContext(request,variables))
+                        error_message = 'Setting Subscription Failed'
+                        messages['error_messages'].append(error_message)
+                        return render_subscription(request,messages)
  
 
         if request.POST['method'] == 'addcard':
 
-            f = open('/tmp/addcard','a')
-            f.write(repr(request.POST))
-            f.close()
+            #f = open('/tmp/addcard','a')
+            #f.write(repr(request.POST)) 
+            #f.close()
 
-            first_name  = request.POST['first_name']
-            last_name   = request.POST['last_name']
-            postal_code = request.POST['postal_code']
-            account     = request.POST['account']
-            month       = request.POST['month']
-            year        = request.POST['year']
-            cvv         = request.POST['cvv']
+            addcard_error = False
+
+            if 'first_name' not in request.POST:
+                addcard_error = True
+                error_message     = 'Failed adding card "First Name" is invalid.'
+                messages['error_messages'].append(error_message)
+
+            if 'last_name' not in request.POST:
+                addcard_error = True
+                error_message     = 'Failed adding card "Last Name" is invalid.'
+                messages['error_messages'].append(error_message)
+
+            if 'postal_code' not in request.POST or not re.match(r'^\d{5}([\-]?\d{4})?$', request.POST['postal_code'].strip()):
+                addcard_error = True
+                error_message     = 'Failed adding card "Postal Code" is invalid.'
+                messages['error_messages'].append(error_message)
+             
+            if 'account' not in request.POST:
+                addcard_error = True
+                error_message     = 'Failed adding card "Account" is invalid.'
+                messages['error_messages'].append(error_message)
+
+            if 'month' not in request.POST:
+                addcard_error = True
+                error_message     = 'Failed adding card "Month" is invalid.'
+                messages['error_messages'].append(error_message)
+
+            if 'year' not in request.POST:
+                print request.POST['year'].strip()
+                addcard_error = True
+                error_message     = 'Failed adding card "Year" is invalid.'
+                messages['error_messages'].append(error_message)
+
+            if 'cvv' not in request.POST:
+                addcard_error = True
+                error_message     = 'Failed adding card "CVV" is invalid.'
+                messages['error_messages'].append(error_message)
+          
+
+            if addcard_error:
+                return render_subscription(request,messages)
+
+            first_name  = request.POST['first_name'].strip()
+            last_name   = request.POST['last_name'].strip()
+            postal_code = request.POST['postal_code'].strip()
+            account     = request.POST['account'].strip()
+            month       = request.POST['month'].strip()
+            year        = request.POST['year'].strip()
+            cvv         = request.POST['cvv'].strip()
             user_id     = request.user.id
 
+
+            try:
+                braintree_customer  = braintree_model.get_braintree_customer(str(request.user.id))
+            except Exception,ex:
+                f = open('/tmp/braintree_getcustomer','a')
+                f.write(repr(ex))
+                f.close()
 
             if braintree_customer is None:
 
@@ -360,34 +352,13 @@ def subscriptions(request):
                 if customer_result is not None and customer_result.is_success:
 
                     success_message     = 'Adding a new card was succesful.'
-
-                    success_messages.append(success_message)
-                    variables   = RequestContext(request, { 'subscription'      : braintree_customer_subscription,
-                                                            'plans'             : braintree_plans,
-                                                            'info_messages'     : info_messages,
-                                                            'success_messages'  : success_messages,
-                                                            'error_messages'    : error_messages,
-                                                            'client_side_key'   : client_side_key,
-                                                            'cards'             : customer_cards,
-                                                }
-                                      )
-
-                    return render_to_response('payment/recurring_billing.html', RequestContext(request,variables))
+                    messages['success_messages'].append(success_message)
+                    return render_subscription(request,messages)
 
                 else:
-                    error_message     = 'Adding a new card failed.'
-                    error_messages.append(error_message)
-                    variables   = RequestContext(	request, {  'subscription'      : braintree_customer_subscription,
-                                                                'info_messages'     : info_messages,
-                                                                'success_messages'  : success_messages,
-                                                                'error_messages'    : error_messages,
-                                                                'client_side_key'   : client_side_key,
-                                                                'cards'             : customer_cards,
-                                                                'plans'             : braintree_plans,
-                                                      }
-                                 )
-
-                    return render_to_response('payment/recurring_billing.html', RequestContext(request,variables))
+                    error_message     = 'Adding a new card failed customer.'
+                    messages['error_messages'].append(error_message)
+                    return render_subscription(request,messages)
             else:
                 addcard = {'customer_id'     :  user_id,
                             'account'        :  account,
@@ -400,59 +371,22 @@ def subscriptions(request):
 
                 addcard_result = braintree_model.addcard_to_customer(addcard)
 
-                f = open('/tmp/addcard_result','a')
-                f.write(repr(addcard_result))
-                f.close()
+                #f = open('/tmp/addcard_result','a')
+                #f.write(repr(addcard_result))
+                #f.close()
 
                 if addcard_result.is_success:
 
                     success_message     = 'Adding a new card was succesful.'
-                    success_messages.append(success_message)
-                    customer_cards.append(addcard_result.credit_card)
-
-                    variables   = RequestContext(request, { 'subscription'      : braintree_customer_subscription,
-                                                            'plans'             : braintree_plans,
-                                                            'info_messages'     : info_messages,
-                                                            'success_messages'  : success_messages,
-                                                            'error_messages'    : error_messages,
-                                                            'client_side_key'   : client_side_key,
-                                                            'cards'             : customer_cards,
-                                                }
-                                      )
-
-                    return render_to_response('payment/recurring_billing.html', RequestContext(request,variables))
+                    messages['success_messages'].append(success_message)
+                    return render_subscription(request,messages)
 
                 else:
                     error_message     = 'Adding a new card failed.'
-                    error_messages.append(error_message)
-                    variables   = RequestContext(	request, {  'subscription'      : braintree_customer_subscription,
-                                                                'info_messages'     : info_messages,
-                                                                'success_messages'  : success_messages,
-                                                                'error_messages'    : error_messages,
-                                                                'client_side_key'   : client_side_key,
-                                                                'cards'             : customer_cards,
-                                                                'plans'             : braintree_plans,
-                                                      }
-                                 )
+                    messages['error_messages'].append(error_message)
+                    return render_subscription(request,messages)
 
-                    return render_to_response('payment/recurring_billing.html', RequestContext(request,variables))
-
-
-
-
-    variables = RequestContext(request,{
-                                        'subscription'      : braintree_customer_subscription,
-                                        'info_messages'     : info_messages,
-                                        'success_messages'  : success_messages,
-                                        'error_messages'    : error_messages,
-                                        'client_side_key'   : client_side_key,
-                                        'cards'             : customer_cards,
-                                        'plans'             : braintree_plans,
-                                        }
-                             )
-
-    return render_to_response('payment/recurring_billing.html', variables)
-
+    return render_subscription(request,messages)
 
 
 def payment(request):
@@ -488,7 +422,7 @@ def payment(request):
             error_message = error_message + 'CVV is Required. '
 
         if 'payment_level' in data:
-            pattern = r'^[1-4]{1}$'
+            pattern = r'^[1-9]{1}$'
             result = re.match(pattern, data['payment_level'].strip())
             print data['payment_level']
             if result:
@@ -503,9 +437,13 @@ def payment(request):
                 elif data['payment_level'] == '5':
                     amount = '25.00'
                 elif data['payment_level'] == '6':
-                    amount = '550.00'
+                    amount = '300.00'
                 elif data['payment_level'] == '7':
-                    amount = '1000.00'
+                    amount = '600.00'
+                elif data['payment_level'] == '8':
+                    amount = '450.00'
+                elif data['payment_level'] == '9':
+                    amount = '900.00'
              
                 else:
                     error = True

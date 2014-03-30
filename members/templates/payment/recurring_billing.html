@@ -109,7 +109,7 @@
         <input type="hidden" name="method" value="subscribe" id="subscribe_method"/>
 
         <div style="width:400px;">
-        <table class="table table-responsive" align="center" >
+        <table class="table table-responsive" >
             <tr>
             <th>Select Card For Subscription</th>
             <th>Remove Card</th>
@@ -123,6 +123,10 @@
             </tr>
             {% endfor %}
             <tr><td>
+        </table>
+
+        <h2>Set Subscription</h2>
+            <table class="table table-responsive">
             {%if plans != None %}
                <select name="plan_id" class="form-control">
                 {% for plan in plans %}
@@ -135,6 +139,7 @@
                 <td><input class="submit-button" type="submit"  value="Subscribe" /></td>
             </tr>
         </table>
+        </br>
         </div>
      
         </form>

@@ -39,7 +39,7 @@ class RegistrationForm(forms.Form):
 
     #additional_questions = forms.CharField(label='Additional Questions / Comments ', widget=forms.Textarea)
 
-    #captcha = ReCaptchaField(attrs={'theme' : 'clean'})
+    captcha = ReCaptchaField(attrs={'theme' : 'clean'})
 
     def clean_handle(self):
 
@@ -102,10 +102,34 @@ class RegistrationForm(forms.Form):
         
         if password1 == password2:
 
-            if not re.search(r'^(?=.*[0-9]+.*)(?=.*[a-z]+.*)(?=.*[A-Z]+.*)(?=.*[\!\@\#\$\%\&\*\(\)\[\]\;\'\-\_\+\=\{\}\[\]\?\<\>\.\,\|]+.*)[0-9a-zA-Z\!\@\#\$\%\&\*\~\*\(\)\[\]\;\'\-\_\+\=\{\}\[\]\?\<\>\.\,\|]{8,}',password1):
-                raise forms.ValidationError('Password must contain at least one lower chracter, one uppercase character, at least one number, at least one special charater, and be longer than eight charaters.')
-            else:
+            valid_password = True
+            message = ''
+
+            if len(password2) < 8:
+                valid_password = False
+                message += 'Password must be longer than 8 characters. '
+
+            if not re.search(r'(?=.*[\d])',password2):
+                valid_password = False
+                message += 'Password did not contain one number. '
+
+            if not re.search(r'(?=.*[a-z])',password2):
+                valid_password = False
+                message += 'Password did not contain a lower case character. '
+
+            if not re.search(r'(?=.*[A-Z])',password2):
+                valid_password = False
+                message += 'Password did not contain a capital character. '
+
+            if not re.search(r'(?=.*[\!\@\#\$\%\&\*\(\)\^\[\]\;\:\'\-\_\+\=\{\}\[\]\?\<\>\ \.\,\|\`\\\/]+.*)',password2):
+                valid_password = False
+                message += 'Password did not contain a special character. '
+
+            if valid_password:
                 return password2
+            else:
+                raise forms.ValidationError(message)
+
       raise forms.ValidationError('Passwords do not match.')
 
 
