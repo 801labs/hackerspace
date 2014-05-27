@@ -342,6 +342,7 @@ def subscriptions(request):
                              'postal_code' : postal_code,
                              'account'     : account,
                              'month'       : month,
+                             'email'       : request.user.email,
                              'year'        : year,
                              'cvv'         : cvv,
                              'id'          : user_id,

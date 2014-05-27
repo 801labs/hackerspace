@@ -11,6 +11,7 @@ urlpatterns = patterns('',
     url(r'^logout/$', views.logout_page, name='logout'),
     url(r'^register/$', views.register_page, name='register'),
     url(r'^register/success/$', views.register_success,name='success'),
+    url(r'^egister/success/$', views.register_success,name='success'),
     #url(r'^member/$', views.member,name='member'),
     url(r'^payment/$', views.payment,name='payment'),
     url(r'^subscriptions/$', views.subscriptions,name='subscriptions')

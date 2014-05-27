@@ -52,7 +52,8 @@ class DC801UserManager(BaseUserManager):
         title = "801 labs account confirmation"
         content = "http://www.801labs.org/confirm/" + str(confirmation_code) + "/" + handle
         try:
-            send_mail(title, content, 'no-reply@801labs.org', [email], fail_silently=False)
+            pass
+            #send_mail(title, content, 'no-reply@801labs.org', [email], fail_silently=False)
         except Exception,ex:
             f = open('/tmp/sendmail','w')
             f.write(repr(ex))
@@ -83,8 +84,8 @@ class DC801User(AbstractBaseUser,PermissionsMixin):
     last_name         = models.CharField(max_length=254, blank=True)
     member_level      = models.ForeignKey('MemberLevel',default=1)
     phone_number      = models.CharField(max_length=11, blank=True)
-    confirmation_code = models.CharField(max_length=33)
-    subscription_code = models.CharField(max_length=254)
+    confirmation_code = models.CharField(max_length=33, blank=True)
+    subscription_code = models.CharField(max_length=254, blank=True)
 
 
     USERNAME_FIELD   = 'email'
@@ -302,6 +303,7 @@ class BrainTree(models.Model):
             "id": customer['id'],
             "first_name"    : customer["first_name"],
             "last_name"     : customer["last_name"],
+            "email"         : customer["email"],
             "credit_card"   : {
                 "billing_address"   : {
                                 "postal_code"   : customer["postal_code"]
