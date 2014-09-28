@@ -1,0 +1,31 @@
+{% extends "members/base.html" %}
+
+{% block title %}   Members Site{% endblock %}
+{% block head %}    Members Site{% endblock %}
+
+{% block content %}
+    {% if user.handle %}
+    <p>Welcome</p>
+    <p> {{ user.handle }}</p>
+    <p>{{message}}</p>
+    {% else %}
+      <div class="row featurette">
+        <div class="col-md-7">
+          <h2 class="featurette-heading">Standard Membership -<span class="text-muted"> $50.00</span></h2>
+          <p class="lead">Gets you keys to the hackerspace and access to all member benefits such as pay events like ctfs and campouts </p>
+        </div>
+        <div class="col-md-5">
+          <img class="featurette-image img-responsive" data-src="holder.js/500x500/auto" src="/static/img/801labs-01.jpg" alt="Generic placeholder image">
+        </div>
+    </div>
+ <div class="row featurette">
+        <div class="col-md-5">
+          <img class="featurette-image img-responsive" data-src="holder.js/500x500/auto" src="/static/img/801labs-02.jpg" alt="Generic placeholder image">
+        </div>
+        <div class="col-md-7">
+          <h2 class="featurette-heading">Supporter Membership -<span class="text-muted"> $25.00</span></h2>
+          <p class="lead">Supporter memberships are a way of saying thank you to 801labs. It helps us run the space and gives you access to paid events.</p>
+        </div>
+      </div>
+  {% endif %}
+{% endblock %}

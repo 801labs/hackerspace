@@ -95,6 +95,18 @@ def index(request):
 
     return render_to_response('members/index.html', RequestContext(request))
 
+def member_info(request):
+
+    page_data = {'user':request.user}
+    variables = RequestContext(request, page_data)
+    return render_to_response('members/member_info.html', variables)
+
+def gallery(request):
+
+   page_data = {'user':request.user}
+   variables = RequestContext(request, page_data)
+   return render_to_response('members/gallery.html', variables)
+
 
 def subscriptions(request):
 
