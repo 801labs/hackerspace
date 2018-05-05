@@ -1,0 +1,64 @@
+{% extends "members/base.html" %}
+
+{% block title %}   Classes {% endblock %}
+{% block head %}    Classes{% endblock %}
+
+{% block content %}
+    {% if user.handle %}
+    <p>Welcome</p>
+    <p> {{ user.handle }}</p>
+    <p>{{message}}</p>
+    {% else %}
+    <h1>801 Labs Classes</h1>
+    <p>All classes are free to 801 Labs members and are avialable to the public at a small cost.</p>
+    <br/>
+    <br/>
+    <div class="panel panel-default">
+        <div class="panel-heading"> <h2> Intro to Intel x86 Assembly</h2></div>
+          <div class="panel-body">
+    <a href="https://www.eventbrite.com/e/intro-to-intel-x86-assembly-tickets-14977858177">Event Brite</a>
+    <p>Come and learn Intel x86 Assembly </p>
+    <p>During this class we will focus on the basic concepts of hardware that assembly code deals with. The class will go over many of the most common assembly instructions.</p>
+    <p>This class is free to members of 801 Labs and all funds received go to help fund the hacker space.
+    The lab work will include examples expanded from <a href="http://opensecuritytraining.info/IntroX86.html">"http://opensecuritytraining.info/IntroX86.html</a></p>
+    <p>
+    * Debugging and stepping through a C programs and watching the changes to the stack at each instruction (push, pop, call, ret (return), mov)
+    * Stepping through complicated programs focusing on (adds lea(load effective address), add, sub)
+    * Understanding the correspondence between C and assembly control transfer mechanisms (e.g. goto in C == jmp in ams)
+    * Understanding conditional control flow and how loops are translated from C to asm(conditional jumps, jge(jump greater than or equal), jle(jump less than or equal), ja(jump above), cmp (compare), test, etc.)
+    </p>
+    <p> <b>Prerequisites:</b>  <br/>
+    A basic understanding of programming in a higher level language (variable, control flow constructs, etc.)
+    </p>
+    <p>
+    <b>Requirements:</b> <br/>
+    Access to a Linux OS with gcc & gdb installed before class. Please bring your own laptop one will not be provided for you.</p>
+    <br/>
+    </div>
+</div>
+    <br/>
+    <br/>
+    <div class="panel panel-default">
+            <div class="panel-heading">
+                <h2>SQL Injection and Web Shell Lab</h2>
+            </div>
+            <div class="panel-body">
+  <a href="https://www.eventbrite.com/e/sql-injection-and-web-shell-lab-tickets-14978403809">Event Brite</a>
+   
+    <p>Want to understand SQL injection and how it effects your applications? Ever wanted to know how attackers can gain access to your web server? This class will take you from injection to system access.</p>
+
+    <p>This class ran by 801 Labs will consist of multiple scenarios on injection techniques and show you how to implement web shells.</p>
+    <p> The main target technology of the class is the Linux Apache MySQL PHP Stack (LAMP). <p>
+    <p><b>Prerequisite</b><br/>
+    This is intended for beginners and will start at a basic level and will not require previous knowledge of PHP code. A basic understand of SQL syntax is highly recommended. Please work on understanding the difference between SELECT,INSERT,UPDATE,DELETE queries and how to connect to a MySQL instance from a Linux CLI.</p>
+
+    <p><b>Requirements</b><br/>
+    A laptop capable of running a Virtual Machine (VM). The VM will be of an OVA format and the class will focus on using virtual box. A basic understanding of Linux command line and system management is required. Please bring your own laptop one will not be provided for you.
+    All funds raised from this event go to help run and manage the 801 Labs Hacker Space.
+    </p>
+</div>
+</div>
+
+
+  {% endif %}
+{% endblock %}

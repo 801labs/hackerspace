@@ -1,0 +1,59 @@
+{% extends "members/base.html" %}
+
+{% block title %}   Members Site{% endblock %}
+{% block head %}    Members Site{% endblock %}
+
+{% block content %}
+ <div class="panel-group" id="accordion">
+        <div class="faqHeader"></h2>Frequently Asked Questions</h2></div>
+<br/>
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h4 class="panel-title">
+                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#collapseOne">Do I need to have a membership to attend events?</a>
+                </h4>
+            </div>
+            <div id="collapseOne" class="panel-collapse collapse in">
+                <div class="panel-body">
+                <p><b>Answer: No!</b> 801 Labs is a community based hackerspace that was setup to provided a place for the community of Salt Lake City to meet about technology and host events.</p>
+               </div>
+            </div>
+
+       <div class="panel-heading">
+                <h4 class="panel-title">
+                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#collapseTwo">Do I need a membership to host events?</a>
+                </h4>
+            </div>
+            <div id="collapseTwo" class="panel-collapse collapse">
+                <div class="panel-body">
+                <p><b>Answer: Yes!</b> All events require an active member with good standing to manage and run events. If you would like to host a event talk to a member about it. Additionaly a member is required to stay at the space for the entire event.</p>
+               </div>
+            </div>
+
+       <div class="panel-heading">
+                <h4 class="panel-title">
+                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#collapse3">When is the hackerspace open?</a>
+                </h4>
+            </div>
+            <div id="collapse3" class="panel-collapse collapse">
+                <div class="panel-body">
+                <p><b>Answer: Depends Check the Event Calendar</b> The hackerspace is open when ever a key holding member is at the space and keeping the door open for the public. The best night to come by is on Thursday nights during hangout night.</p>
+               </div>
+            </div>
+
+
+       <div class="panel-heading">
+                <h4 class="panel-title">
+                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#collapse4">What is the difference between 801 Labs and DC801</a>
+                </h4>
+            </div>
+            <div id="collapse4" class="panel-collapse collapse">
+                <div class="panel-body">
+                <p><b>Answer: 801 Labs is a hackerspace DC801 is a user group.</b> DC801 is a user group open to everyone, 801 Labs is a hackerspace which is a physical space that survives off of hackerspace memberships to keep the lights on.</p>
+               </div>
+            </div>
+ 
+
+ 
+    </div>
+{% endblock %}

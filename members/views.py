@@ -7,6 +7,10 @@ from django.contrib.auth import authenticate, login as auth_login
 from django.template import Context, loader
 from django.template import RequestContext
 from django.shortcuts import render_to_response
+from django.contrib.auth.views import password_reset
+from django.core.mail import send_mail
+from django.conf.urls.defaults import *
+from django.core.exceptions import *
 from members.forms import *
 from members.models import *
 from datetime import datetime  
@@ -14,7 +18,7 @@ from django.shortcuts import redirect
 from django.conf import settings
 import braintree
 import time
-
+import datetime
 
 client_side_key = settings.BRAINTREE_CLIENT_KEY
 
@@ -88,7 +92,7 @@ def index(request):
         else:
             page_data = {
                     'user':request.user,
-                    'message':'Thank you for registering your account needs to be approved before you can become a member. Please come down to one of our meetings and hang out in irc http://webchat.freenode.net/ #dc801 chat.freenode.net or www.dc801.org. On Freenode #dc801 ask for Nemus, L34n or Metacortex for more information.'
+                    'message':'Please come down to one of our meetings and hangout in irc http://webchat.freenode.net/ #dc801 chat.freenode.net or www.dc801.org. On Freenode #dc801 ask for Nemus, L34n or Metacortex for more information.'
                     }
             variables = RequestContext(request,page_data)
             return render_to_response('members/index.html', variables)
@@ -101,6 +105,34 @@ def member_info(request):
     variables = RequestContext(request, page_data)
     return render_to_response('members/member_info.html', variables)
 
+def contact_us(request):
+
+    page_data = {'user':request.user}
+    variables = RequestContext(request, page_data)
+    return render_to_response('members/contact_us.html', variables)
+
+def terms(request):
+
+    page_data = {'user':request.user}
+    variables = RequestContext(request, page_data)
+    return render_to_response('members/terms.html', variables)
+
+
+
+
+
+def faq(request):
+
+    page_data = {'user':request.user}
+    variables = RequestContext(request, page_data)
+    return render_to_response('members/faq.html', variables)
+
+def user_groups(request):
+
+    page_data = {'user':request.user}
+    variables = RequestContext(request, page_data)
+    return render_to_response('members/user_groups.html', variables)
+
 def gallery(request):
 
    page_data = {'user':request.user}
@@ -108,12 +140,38 @@ def gallery(request):
    return render_to_response('members/gallery.html', variables)
 
 
+def classes(request):
+
+   page_data = {'user':request.user}
+   variables = RequestContext(request, page_data)
+   return render_to_response('members/classes.html', variables)
+
+
+def blog(request):
+
+   page_data = {'user':request.user}
+   variables = RequestContext(request, page_data)
+   return render_to_response('members/blog.html', variables)
+
+
+
+
+
+def events(request):
+
+   page_data = {'user':request.user}
+   variables = RequestContext(request, page_data)
+   return render_to_response('members/events.html', variables)
+
+
+
+
 def subscriptions(request):
 
     if not request.user.is_authenticated():
         return HttpResponseRedirect('/')
-    if not request.user.member_level.level >= 50:
-        return HttpResponseRedirect('/')
+    #if not request.user.member_level.level >= 50:
+    #    return HttpResponseRedirect('/')
 
     request.session.modified = True
     braintree_model = BrainTree()
@@ -139,7 +197,7 @@ def subscriptions(request):
     #except Exception,ex:
     #    f = open('/tmp/braintree_getcustomer','a')
     #    f.write(repr(ex))
-    #    f.close()
+    #    f.close(s)
 
     message = ''
     cards = None
@@ -150,8 +208,6 @@ def subscriptions(request):
 
     #if request.user.subscription_code is not None and request.user.subscription_code != '' and hasattr(request.user, 'subscription_code'):
     #    braintree_customer_subscription = braintree_model.get_subscription(request.user.subscription_code)
-
-
 
     if request.method == 'POST':
 
@@ -204,6 +260,7 @@ def subscriptions(request):
             if braintree_customer_subscription is not None:
 
                 cancel_result = braintree_model.cancel_subscription(braintree_customer_subscription.id)
+
                 if cancel_result.is_success:
 
                     info_message = "Old Subscription \""+braintree_customer_subscription.plan_id+"\" Canceled. "
@@ -213,10 +270,14 @@ def subscriptions(request):
                     request.user.save()
                     braintree_customer_subscription = None
 
+                    subject = '801 Labs User Canceled Subscription - ' + str(request.user.handle)
+                    message = 'User canceled subscription ' + str(request.user.handle)
+                    send_mail(subject, message, 'no-reply@801labs.org', ['info@dc801.org'])
+
                     return render_subscription(request,messages)
 
                 else:
-                    info_message =  "Old Subscription was NOT \""+braintree_customer_subscription.plan_id+"\" Canceled please call (385) 313-0801 and leave a voicemail. "
+                    info_message =  "Old Subscription \""+braintree_customer_subscription.plan_id+"\" was NOT canceled please call (385) 313-0801 and leave a voicemail. "
                     messages['info_messages'].append(info_message)
 
                     return render_subscription(request,messages)
@@ -266,12 +327,18 @@ def subscriptions(request):
 
                 if subscription_response.is_success:
 
+                      
                         request.user.subscription_code = subscription_response.subscription.id
                         request.user.save()
 
                         braintree_customer_subscription  = subscription_response.subscription
                         success_message     = message +  " New Subscription \""+subscription_response.subscription.plan_id+"\" Successful Set"
                         messages['success_messages'].append(success_message)
+
+                        subject = '801 Labs User New Subscription - ' + str(request.user.handle)
+                        message = 'User Subscription ' + str(request.user.handle) + ' ' + str(braintree_customer_subscription.plan_id)
+                        send_mail(subject, message, 'no-reply@801labs.org', ['info@dc801.org'])
+
 
                         return render_subscription(request,messages)
      
@@ -406,8 +473,8 @@ def payment(request):
 
     if not request.user.is_authenticated():
         return HttpResponseRedirect('/')
-    if not request.user.member_level.level >= 50:
-        return HttpResponseRedirect('/')
+    #if not request.user.member_level.level >= 50:
+    #    return HttpResponseRedirect('/')
 
     request.session.modified = True
     if request.method == 'POST':
@@ -587,31 +654,232 @@ def logout_page(request):
     return HttpResponseRedirect('/')
 
 
-def register_page(request):
+def reset_page(request):
 
     if request.user.is_authenticated():
       return render_to_response('members/index.html', RequestContext(request))
 
     if request.method == 'POST':
-      form = RegistrationForm(request.POST)
+        
+        form = ResetForm(request.POST)
 
-      if form.is_valid():
-        user = DC801User.objects.create_user(
-                  email         =    form.cleaned_data['email'],
-                  password      =    form.cleaned_data['password1'],
-                  handle        =    form.cleaned_data['handle'],
-                  first_name    =    form.cleaned_data['first_name'],
-                  last_name     =    form.cleaned_data['last_name'],
-                  phone_number  =    form.cleaned_data['phone_number'],
-        )
-        return HttpResponseRedirect('/register/success/')
+        if form.is_valid():
+            email = form.cleaned_data['email']
+
+            form = ResetForm()
+
+            try:
+                user = DC801User.objects.filter(email=email)
+
+                if not user:
+
+                    variables = RequestContext(request, {
+                        'form': form, 'message':'Reset email sent to ' + str(email)
+                    })
+                else:
+
+                    variables = RequestContext(request, {
+                        'form': form, 'message':'Reset email sent to ' + str(email)
+                    })
+
+                    user[0].reset_password()
+     
+            except ObjectDoesNotExist:
+                    variables = RequestContext(request, {
+                        'form': form, 'message':'Failure' + str(email)
+                    })
+              
+                    user = None
+
+            return render_to_response('registration/reset_email.html', variables)
+
+        else:
+            form = ResetForm()
+
+            variables = RequestContext(request, {
+            'form': form
+            })
+
+            return render_to_response('registration/reset_email.html', variables)
 
     else:
-      form = RegistrationForm()
+        form = ResetForm()
 
+        variables = RequestContext(request, {
+        'form': form
+        })
+
+        return render_to_response('registration/reset_email.html', variables)
+
+def reset_code(request,reset_code):
+
+    if request.user.is_authenticated():
+      return render_to_response('members/index.html', RequestContext(request))
+
+    form = ResetPasswordForm(initial={'reset_code': reset_code})
+
+    try:
+
+        reset = ResetPasswordCode.objects.filter(confirmation_code=str(reset_code))
+        #print repr(reset[0].used)
+        if reset[0].used:
+            return redirect('/')
+        print reset[0].timestamp
+        #reset time
+        lapse_time = time.time() - 86400
+        print lapse_time
+        if reset[0].timestamp < lapse_time:
+            return redirect('/')
+
+        if request.method == 'POST':
+
+            form = ResetPasswordForm(request.POST)
+
+            if form.is_valid():
+
+                reset_obj = ResetPasswordCode.objects.get(id=reset[0].id)
+                new_password  = form.cleaned_data['new_password1']
+                user = DC801User.objects.get(id=reset[0].user.id)
+                user.set_password(new_password)
+                user.save()
+                reset_obj.used = True
+                reset_obj.save()
+
+                variables = RequestContext(request, {
+                    'message': 'Password succesful changed please login.'
+                })     
+
+                return render_to_response('registration/reset_password_success.html', variables)
+            else:
+                variables = RequestContext(request, {
+                    'form'      : form, 
+                    'message'   : '' ,
+                    'reset_code': reset_code
+                })     
+    
+                return render_to_response('registration/reset_password.html', variables)
+ 
+   
+
+        
+        if not reset:
+            variables = RequestContext(request, {
+                'form'      : form, 
+                'message'   : 'Failure ' + str(reset_code),
+                'reset_code': reset_code
+            })
+
+            #return render_to_response('registration/reset_password.html', variables)
+            return redirect('/')
+        else:
+
+            variables = RequestContext(request, {
+                'form'      : form, 
+                'message'   : 'Reset Password',
+                'reset_code': reset_code
+            })     
+
+            return render_to_response('registration/reset_password.html', variables)
+    
+      
+    except ObjectDoesNotExist:
+
+        
+        variables = RequestContext(request, {
+                        'form'      : form, 
+                        'message'   :'Failure' + str(reset_code),
+                        'reset_code': resset_code,
+                    })
+              
+        return render_to_response('registration/reset_password.html', variables)
+    return redirect('/')
+
+
+
+def register_page(request):
+
+    if request.user.is_authenticated():
+        return render_to_response('members/index.html', RequestContext(request))
+
+    if request.method == 'POST':
+        form = RegistrationForm(request.POST)
+
+        if form.is_valid():
+
+            user = DC801User.objects.create_user(
+                email        = form.cleaned_data['email'],
+                password     = form.cleaned_data['password1'],
+                handle       = form.cleaned_data['handle'],
+                first_name   = form.cleaned_data['first_name'],
+                last_name    = form.cleaned_data['last_name'],
+                phone_number = form.cleaned_data['phone_number'],
+            )
+            return HttpResponseRedirect('/register/success/')
+
+        else:
+            variables = RequestContext(request, {
+                'form': form
+                })
+            return render_to_response('registration/register.html', variables)
+    else:
+        form = RegistrationForm()
+        variables = RequestContext(request, {
+                'form': form
+        })
+        return render_to_response('registration/register.html', variables)
+
+def pr_request(request):
+
+    #if user is not authenticated then redirect them
+    if not request.user.is_authenticated():
+        return HttpResponse(status=404)
+
+    if request.method == 'POST':
+
+    
+        PRform = PRForm(request.POST)
+        if PRform.is_valid():
+
+            emailsubject = str(request.user.handle) + " PR REQUEST " + str(datetime.datetime.now())
+            # do something 
+            #success message blah blah
+            try:
+                message = "\r 801 Handle: "   + str(request.user.handle) + "\r Form Handle: "  + str(PRform.cleaned_data['handle']) + "\r Date: "         + str(PRform.cleaned_data['date']) + "\r Time: "         + str(PRform.cleaned_data['time'])  + "\r Reoccuring: "   + str(PRform.cleaned_data['reoccuring']) + "\r Event:  "       + str(PRform.cleaned_data['event']) + "\r Description:  " + str(PRform.cleaned_data['description'].encode("ascii", "ignore")) + "\r Notes: "        + str(PRform.cleaned_data['notes'].encode("ascii", "ignore"));
+                send_mail(emailsubject, 
+                            message, 
+                            'no-reply@801labs.org', 
+                            ['board@801labs.org'])
+
+                variables = RequestContext(request, {
+                'message' : "Request Submited Successfully",
+                'form': PRform
+                })
+
+
+                return render_to_response('members/pr_request.html', variables)
+            except Exception, e:
+                print PRform.errors
+                variables = RequestContext(request, {
+                'message' : "Request Failed ",
+                'form': PRform
+                })
+                f = open('/tmp/pr_error','a')
+                f.write(repr(e))
+                f.close()
+
+                return render_to_response('members/pr_request.html', variables)
+            
+
+        else:
+            #error message
+            variables = RequestContext(request, {
+            'message': 'Submition failed',
+            'form': PRform
+            })
+            return render_to_response('members/pr_request.html', variables)
+
+    prform = PRForm()
     variables = RequestContext(request, {
-      'form': form
+        'form': PRForm
     })
-    return render_to_response('registration/register.html', variables)
-
-
+    return render_to_response('members/pr_request.html', variables)

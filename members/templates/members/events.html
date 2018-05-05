@@ -1,0 +1,17 @@
+{% extends "members/base.html" %}
+
+{% block title %} SLC Hackerspace Events{% endblock %}
+{% block head %}  SLC Hackerspace Events{% endblock %}
+
+{% block content %}
+    {% if user.handle %}
+    <p>Welcome</p>
+    <p> {{ user.handle }}</p>
+    <p>{{message}}</p>
+    {% endif %}
+<h3>Meetup Page and Google Calendar</h3>
+<a href="http://www.meetup.com/thetransistor/">http://www.meetup.com/thetransistor/</a>
+<br/>
+<br/>
+<center><iframe style="border: 0;" src="https://www.google.com/calendar/embed?src=pdf2umolrh2hnclgvfpr9k681c%40group.calendar.google.com&amp;ctz=America/Denver" width="800" height="600" frameborder="0" scrolling="no"></iframe></center></p>
+{% endblock %}

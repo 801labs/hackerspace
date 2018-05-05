@@ -1,0 +1,91 @@
+{% extends "members/base.html" %}
+
+{% block title %}   Members Site{% endblock %}
+{% block head %}    Members Site{% endblock %}
+{% block header_includes %}
+ <script>
+     $(function() {
+        $( "#id_date" ).datepicker();
+     });
+ </script>
+{% endblock %}
+
+{% block content %}
+<h2>{{message}}</h2>
+<h1>Promotion and Event Request</h1>
+<p>Have an event you need to Promote? Fill out this form to send it off to our PR team that will get it posted to all of the social media sites!</p><br><br>
+
+<form method="post" action="/pr_request/" cellspacing="10">
+    {% csrf_token %}
+    <table border="0" cellspacing="50">
+        <tr>
+            <td>
+                <label for="handle">Handle</label>
+            </td>
+            <td>
+                {{ form.handle }}
+                 {{ form.handle.errors }}
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <label for="date">Date</label>
+            </td>
+            <td>
+                {{ form.date }}
+                {{ form.date.errors }}
+                <br>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <label for="time">Time</label>
+            </td>
+            <td>
+                {{ form.time }}
+                {{ form.time.errors }}
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <label for="reoccuring">Reoccuring?</label>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            </td>
+            <td> Yes: {{ form.reoccuring }}
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <label for="event">Event Name</label>
+            </td>
+            <td>
+                {{ form.event }}
+                {{ form.event.errors }}
+            </td>
+        </tr>
+        <tr valign="top">
+            <td>
+                <label for="description">Description</label>
+            </td>
+            <td>
+                {{ form.description }}
+                {{ form.description.errors }}
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <label for="notes">Additional Notes</label>
+            </td>
+            <td>
+                {{ form.notes }}
+                {{ form.description.notes }}
+            </td>
+        </tr>
+        <tr>
+            <td>
+                 <input type="submit" value="Submit" />
+            </td>
+        </tr>
+    </table>
+</form>
+{% endblock %}

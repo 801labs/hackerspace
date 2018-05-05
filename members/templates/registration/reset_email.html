@@ -1,0 +1,15 @@
+{% extends "members/base.html" %}
+
+{% block title %}Password Reset{% endblock %}
+{% block head %}Password Reset{% endblock %}
+
+{% block content %}
+<div align="left"> 
+   <p>{{ message }}</p>
+  <form method="post" action="/reset/">
+      {% csrf_token %}
+      {{ form.as_p}}
+    <input type="submit" value="Reset" />
+  </form>
+</div>
+{% endblock %}

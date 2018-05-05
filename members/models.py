@@ -22,6 +22,7 @@ class DC801UserManager(BaseUserManager):
         now = timezone.now()
         if not email:
             raise ValueError('The given email must be set')
+
         confirmation_code = ''.join(random.choice(string.ascii_uppercase + string.digits + string.ascii_lowercase) for x in range(33))
 
         email = self.normalize_email(email)
@@ -77,7 +78,15 @@ class DC801User(AbstractBaseUser,PermissionsMixin):
     is_active        = models.BooleanField(_('active'), default=True,
                                             help_text=_('Designates whether this user should be treated as '
                                              'active. Unselect this instead of deleting accounts.'))
-    
+    is_member         = models.BooleanField(_('active'), default=True,
+                                                          help_text=_('Designates whether this user is a paying member '
+                                                                'active. Unselect this instead of deleting accounts.'))
+    confirmed_email   = models.BooleanField(_('confirmed'), default=True,
+                                                          help_text=_('Designates whether this user confirmed there email '
+                                                                'confirmed.'))
+
+
+
     date_joined       = models.DateTimeField(_('date joined'), default=timezone.now)
     objects           = DC801UserManager()
     first_name        = models.CharField(max_length=254, blank=True)
@@ -86,7 +95,6 @@ class DC801User(AbstractBaseUser,PermissionsMixin):
     phone_number      = models.CharField(max_length=11, blank=True)
     confirmation_code = models.CharField(max_length=33, blank=True)
     subscription_code = models.CharField(max_length=254, blank=True)
-
 
     USERNAME_FIELD   = 'email'
     REQUIRED_FIELDS = ['handle','first_name','last_name','phone_number']
@@ -124,6 +132,41 @@ class DC801User(AbstractBaseUser,PermissionsMixin):
         Sends an email to this User.
         """
         send_mail(subject, message, from_email, [self.email])
+
+
+    def reset_password(self):
+        resetpassword = ResetPasswordCode(  user=self,
+                                            timestamp=time.time(),
+                                            used=False,
+                                          )
+
+        reset_code = resetpassword.create_confirmation_code()
+        resetpassword.confirmation_code = reset_code
+        resetpassword.save()
+
+        title = "801 Labs password reset."
+        content = "Click Here to reset your password - http://www.801labs.org/reset/" + str(reset_code)
+
+        try:
+            send_mail(title, content, 'no-reply@801labs.org', [self.email], fail_silently=False)
+        except Exception,ex:
+            f = open('/tmp/sendmail','w')
+            f.write(repr(ex))
+            f.close()
+
+        
+
+class ResetPasswordCode(models.Model):
+
+    id                  = models.AutoField(primary_key=True)
+    user                = models.ForeignKey(DC801User)
+    timestamp           = models.PositiveIntegerField()
+    used                = models.BooleanField(default=False)
+    confirmation_code   = models.CharField(max_length=33, blank=True)
+
+    def create_confirmation_code(self):
+        confirmation_code = ''.join(random.choice(string.ascii_uppercase + string.digits + string.ascii_lowercase) for x in range(33))
+        return confirmation_code
 
 
 class Transaction(models.Model):

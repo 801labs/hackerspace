@@ -8,24 +8,42 @@
     <p>Welcome</p>
     <p> {{ user.handle }}</p>
     <p>{{message}}</p>
-    {% else %}
-      <div class="row featurette">
+    {% endif %}
+    <div class="page-header">
+        <h1>Member Benefits</h1>
+    </div>
+    <div>
+        <p>Members gain the benefit of bing part of a great group of people and friends. Members gain priority access to official 801labs training events (*subject to change) based on availability,  our private file share, laser cutter and other specialized equipment after the completion of safty and use training. Members can use the space's soldering irons when a key holding member is present. <p> All memberships subscriptions above $50.00 come with key access to the hackerspace. Although most of our events are open to the public, we rely on members to support the hackerspace and keep the lights running. All memberships are due monthly</p></div>
+    <div class="row featurette">
         <div class="col-md-7">
-          <h2 class="featurette-heading">Standard Membership -<span class="text-muted"> $50.00</span></h2>
-          <p class="lead">Gets you keys to the hackerspace and access to all member benefits such as pay events like ctfs and campouts </p>
+          <h2>Monthly Standard Membership -<span class="text-muted"> $50.00</span></h2>
+          <p class="lead">Gets you keys to the hackerspace and access to all member benefits such as paid events like ctfs and campouts </p>
         </div>
         <div class="col-md-5">
-          <img class="featurette-image img-responsive" data-src="holder.js/500x500/auto" src="/static/img/801labs-01.jpg" alt="Generic placeholder image">
+          <img class="featurette-image img-responsive" data-src="holder.js/500x500/auto" src="/static/img/801class.jpg" alt="Meetup">
         </div>
     </div>
  <div class="row featurette">
         <div class="col-md-5">
-          <img class="featurette-image img-responsive" data-src="holder.js/500x500/auto" src="/static/img/801labs-02.jpg" alt="Generic placeholder image">
+          <img class="featurette-image img-responsive" data-src="holder.js/500x500/auto" src="/static/img/portalan.jpg" alt="Porta Lan">
         </div>
         <div class="col-md-7">
-          <h2 class="featurette-heading">Supporter Membership -<span class="text-muted"> $25.00</span></h2>
+          <h2>Monthly Supporter Membership -<span class="text-muted"> $25.00</span></h2>
           <p class="lead">Supporter memberships are a way of saying thank you to 801labs. It helps us run the space and gives you access to paid events.</p>
         </div>
       </div>
-  {% endif %}
+      </br>
+ <div class="row featurette">
+        <div class="col-md-5">
+          <img class="featurette-image img-responsive" data-src="holder.js/500x500/auto" src="https://www.801labs.org/static/img/600_449191366.jpeg" alt="Laser Cutter">
+        </div>
+        <div class="col-md-7">
+          <h2>Laser Cutter Usage for Members Only @ -<span class="text-muted">$0.10 A minute</span></h2>
+          <p class="lead"> All Membership gain access to the Laser Cutter once they've completed the training required to run it. <a href="https://youtu.be/g4HUG4jeN6g">How To Video</a></p>
+        </div>
+      </div>
+
+
+
+
 {% endblock %}

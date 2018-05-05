@@ -1,11 +1,12 @@
 import re
 from django import forms as forms
 from django.contrib.auth.models import User
-from captcha.fields import ReCaptchaField    
+#from captcha.fields import ReCaptchaField    
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from members.models import DC801User
+from django.contrib.admin.widgets import AdminDateWidget  #added by metacortex
 
 class RegistrationForm(forms.Form):
     
@@ -39,7 +40,7 @@ class RegistrationForm(forms.Form):
 
     #additional_questions = forms.CharField(label='Additional Questions / Comments ', widget=forms.Textarea)
 
-    captcha = ReCaptchaField(attrs={'theme' : 'clean'})
+    #captcha = ReCaptchaField(attrs={'theme' : 'clean'})
 
     def clean_handle(self):
 
@@ -133,6 +134,66 @@ class RegistrationForm(forms.Form):
       raise forms.ValidationError('Passwords do not match.')
 
 
+class ResetForm(forms.Form):
+    email = forms.CharField(label='Email',widget=forms.TextInput(attrs={'size':'35'}),max_length=254)
+
+class ResetPasswordForm(forms.Form):
+    
+    reset_code = forms.CharField(required=False, max_length=50,widget=forms.HiddenInput())
+
+    new_password1 = forms.CharField(
+      label='Password',
+      widget=forms.PasswordInput(attrs={'size':'35'})
+      ,help_text = '<br/><p>Password must contain at least one lower chracter, </br>one uppercase character, at least one number, at least one special charater,</br> and be longer than eight charaters.</p>'
+    )
+
+    new_password2 = forms.CharField(
+      label='Password (Again)',
+      widget=forms.PasswordInput(attrs={'size':'35'})
+    )
+
+    def clean_new_password2(self):
+
+        if 'new_password1' in self.cleaned_data:
+
+            password1 = self.cleaned_data['new_password1']
+            password2 = self.cleaned_data['new_password2']
+        
+            if password1 == password2:
+
+                valid_password = True
+                message = ''
+
+                if len(password2) < 8:
+                    valid_password = False
+                    message += 'Password must be longer than 8 characters. '
+
+                if not re.search(r'(?=.*[\d])',password2):
+                    valid_password = False
+                    message += 'Password did not contain one number. '
+
+                if not re.search(r'(?=.*[a-z])',password2):
+                    valid_password = False
+                    message += 'Password did not contain a lower case character. '
+
+                if not re.search(r'(?=.*[A-Z])',password2):
+                    valid_password = False
+                    message += 'Password did not contain a capital character. '
+
+                if not re.search(r'(?=.*[\!\@\#\$\%\&\*\(\)\^\[\]\;\:\'\-\_\+\=\{\}\[\]\?\<\>\ \.\,\|\`\\\/]+.*)',password2):
+                    valid_password = False
+                    message += 'Password did not contain a special character. '
+
+                if valid_password:
+                    return password2
+                else:
+                    raise forms.ValidationError(message)
+
+        raise forms.ValidationError('Passwords do not match.')
+
+
+    
+
 class LoginForm(forms.Form):
     email = forms.CharField(label='Email',widget=forms.TextInput(attrs={'size':'35'}),max_length=254)
 
@@ -168,5 +229,55 @@ class DC801UserChangeForm(UserChangeForm):
 
     class Meta:
         model = DC801User
+
+#metacortex prform below
+
+class PRForm(forms.Form):
+
+    handle      = forms.CharField(label='Handle',widget=forms.TextInput(attrs={'size':'35'}),max_length=254)
+    date        = forms.CharField(label='Date',widget = AdminDateWidget)
+    time        = forms.CharField(label='Time',widget=forms.TextInput(attrs={'size':'7'}),max_length=7)
+    reoccuring  = forms.BooleanField(label='Reoccuring',required=False)
+    event       = forms.CharField(label='Event', widget=forms.TextInput(attrs={'size':'35'}),max_length=256)
+    description = forms.CharField(label='Description', widget=forms.Textarea(attrs={'rows':'5'}), max_length=5000)
+    notes       = forms.CharField(label='Notes', widget=forms.Textarea(attrs={'rows':'3'}), max_length=5000,required=False)
+
+    def clean_handle(self):
+        handle = self.cleaned_data['handle'].strip()
+        return handle
+
+    def clean_description(self):
+        description = self.cleaned_data['description'].strip()
+        return description
+     
+    def clean_notes(self):
+        notes = self.cleaned_data['notes'].strip()
+
+
+        return notes
+
+    def clean_event(self):
+        event = self.cleaned_data['event'].strip()
+        return event
+
+"""   def clean_date(self):
+        date = self.cleaned_data['date']
+        print date 
+
+        if not re.search(r'^\w+$', date):
+            raise forms.ValidationError('Date is invalid.')
+        return date
+
+    def clean_time(self):
+        time = self.cleaned_data['time']
+
+        if not re.search(r'^\w+$', time):
+            raise forms.ValidationError('Time is invalid.')
+
+        return time
+"""
+ 
+
+ 
 
 

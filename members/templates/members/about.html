@@ -1,0 +1,15 @@
+{% extends "members/base.html" %}
+
+{% block title %}   Members Site{% endblock %}
+{% block head %}    Members Site{% endblock %}
+
+{% block content %}
+    {% if user.handle %}
+    <p>Welcome</p>
+    <p> {{ user.handle }}</p>
+    <p>{{message}}</p>
+    {% else %}
+    <p>Gallery coming soon</p>
+
+  {% endif %}
+{% endblock %}
