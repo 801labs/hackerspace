@@ -1,11 +1,13 @@
 import os.path
-from django.conf.urls import patterns, include, url
+from django.conf.urls import include, url
 from django.contrib import admin
 from django.conf import settings
 from members import views
 site_media = os.path.join(os.path.dirname(__file__), 'site_media')
 
-urlpatterns = patterns('',
+app_name = 'members'
+
+urlpatterns = [
     url(r'^$', views.index, name='index'),
     url(r'^login/$', views.login, name='login'),
     url(r'^reset/$', views.reset_page, name='reset'),
@@ -19,6 +21,8 @@ urlpatterns = patterns('',
     url(r'^register/success/$', views.register_success,name='success'),
     #url(r'^member/$', views.member,name='member'),
     url(r'^payment/$', views.payment,name='payment'),
+    url(r'^payment/methods/$', views.payment_methods,name='payment_methods'),
+    url(r'^payment/history/$', views.payment_history,name='payment_history'),
     url(r'^subscriptions/$', views.subscriptions,name='subscriptions'),
     url(r'^pr_request/$', views.pr_request,name='pr_request'),
     url(r'^events/$', views.events,name='events'),
@@ -34,4 +38,4 @@ urlpatterns = patterns('',
    # url(r'^(?P<poll_id>\d+)/$', views.detail, name='detail'),
    # url(r'^(?P<poll_id>\d+)/results/$', views.results, name='results'),
    # url(r'^(?P<poll_id>\d+)/vote/$', views.vote, name='vote'),
-)
+]

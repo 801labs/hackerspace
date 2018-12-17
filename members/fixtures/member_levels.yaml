@@ -1,0 +1,24 @@
+- model: members.MemberLevel
+  pk: 1
+  fields:
+    level: 1
+    name: user
+    description: user
+- model: members.MemberLevel
+  pk: 2
+  fields:
+    level: 10
+    name: supporter
+    description: supporter
+- model: members.MemberLevel
+  pk: 3
+  fields:
+    level: 20
+    name: member
+    description: member
+- model: members.MemberLevel
+  pk: 4
+  fields:
+    level: 50
+    name: admin
+    description: admin

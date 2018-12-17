@@ -2,46 +2,6 @@
 
 {% block title %}Hackerspace Salt Lake City, Utah{% endblock %}
 {% block head %}   {% endblock %}
-{%block header_includes %}
- <style>
-      #map_canvas {
-        width: 500px;
-        height: 400px;
-        background-color: #CCC;
-
-      }
-    </style>
-    <script src="https://maps.googleapis.com/maps/api/js"></script>
-<script>
-    function initialize() {
-    
-    var myLatlng = new google.maps.LatLng(40.7654092, -111.8807662);
-
-    var mapCanvas = document.getElementById('map_canvas');
-    var mapOptions = {
-      center: myLatlng,
-      zoom: 13,
-      mapTypeId: google.maps.MapTypeId.ROADMAP
-  }
-
-  var map = new google.maps.Map(mapCanvas, mapOptions);
-
-   var marker = new google.maps.Marker({
-            position: myLatlng,
-            map: map,
-            title: '801 Labs Hacker Space'
-    });
-
-
-  }
- 
-  google.maps.event.addDomListener(window, 'load', initialize);
-
-</script>
-
-
- 
-{% endblock %}
 
 {% block content %}
     {% if user.handle %}
@@ -186,7 +146,7 @@
 Salt Lake City, UT 84111<br>
 </address>
 
-<div id="map_canvas" ></div>
+<iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3021.8485280212035!2d-111.8828484842727!3d40.765356142285825!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8752f572b2a9a799%3A0x383ba8b422af2b1d!2s801Labs!5e0!3m2!1sen!2sus!4v1545050740889" width="600" height="450" frameborder="0" style="border:0" allowfullscreen></iframe>
 
   {% endif %}
 {% endblock %}
