@@ -13,15 +13,9 @@
   <!-- Custom styles for this template -->
   <link href="/static/css/starter-template.css" rel="stylesheet">
   <link href="/static/css/carousel.css" rel="stylesheet">
-  <script src="/static/js/bootstrap2.min.js"></script>
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
-  <script src="/static/js/docs.min.js"></script>
-  <script src="https://maps.googleapis.com/maps/api/js"></script>
- <link rel="stylesheet" href="//code.jquery.com/ui/1.11.2/themes/smoothness/jquery-ui.css">
- <script src="//code.jquery.com/jquery-1.10.2.js"></script>
- <script src="//code.jquery.com/ui/1.11.2/jquery-ui.js"></script>
- <link rel="stylesheet" href="/resources/demos/style.css">
 
+ <link rel="stylesheet" href="//code.jquery.com/ui/1.11.2/themes/smoothness/jquery-ui.css">
+ 
  {% block header_includes %}
  {% endblock %}
 
@@ -93,7 +87,11 @@
       {% block content %}{% endblock %}
    </div><!-- /.container -->
     <script src="http://code.jquery.com/jquery.js"></script>
+    <script src="//code.jquery.com/ui/1.11.2/jquery-ui.js"></script>
     <!-- Include all compiled plugins (below), or include individual files as needed -->
     <script src="/static/js/bootstrap2.min.js"></script>
+
+    {% block footer_includes %}
+    {% endblock %}
 </body>
 </html>
