@@ -9,11 +9,7 @@ virtual environment
     virtualenv venv
     source venv/bin/activate
 
-Install dependencies
-
-    pip install django braintree
-
-or
+Install dependencies (django, braintree)
 
     pip install -r requirements.txt
 
