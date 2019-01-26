@@ -4,9 +4,18 @@ django 2.1, python 3.6
 
 ## Setup
 
+virtual environment
+
+    virtualenv venv
+    source venv/bin/activate
+
 Install dependencies
 
     pip install django braintree
+
+or
+
+    pip install -r requirements.txt
 
 Add [hackerspace/settings.py](hackerspace/settings.py) file
 
