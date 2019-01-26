@@ -4,3 +4,5 @@ venv/
 
 hackerspace/settings.py
 *.sqlite3
+
+public

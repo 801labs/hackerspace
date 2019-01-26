@@ -39,3 +39,10 @@ Admin http://127.0.0.1:8000/admin
 Emails
 
 Default config uses file backend and stores emails in [tmp/app-messages](tmp/app-messages)
+
+## Production
+
+    # primarily for django admin css
+    python manage.py collectstatic
+
+The static is assumed to be at APP_ROOT/public, make sure the webserver routes traffic to wherever your STATIC_ROOT is set to.
