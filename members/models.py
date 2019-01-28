@@ -55,7 +55,7 @@ class DC801UserManager(BaseUserManager):
         try:
             pass
             #send_mail(title, content, 'no-reply@801labs.org', [email], fail_silently=False)
-        except Exception,ex:
+        except Exception as ex:
             f = open('/tmp/sendmail','w')
             f.write(repr(ex))
             f.close()
@@ -91,7 +91,7 @@ class DC801User(AbstractBaseUser,PermissionsMixin):
     objects           = DC801UserManager()
     first_name        = models.CharField(max_length=254, blank=True)
     last_name         = models.CharField(max_length=254, blank=True)
-    member_level      = models.ForeignKey('MemberLevel',default=1)
+    member_level      = models.ForeignKey('MemberLevel',default=1,on_delete=models.CASCADE)
     phone_number      = models.CharField(max_length=11, blank=True)
     confirmation_code = models.CharField(max_length=33, blank=True)
     subscription_code = models.CharField(max_length=254, blank=True)
@@ -149,7 +149,7 @@ class DC801User(AbstractBaseUser,PermissionsMixin):
 
         try:
             send_mail(title, content, 'no-reply@801labs.org', [self.email], fail_silently=False)
-        except Exception,ex:
+        except Exception as ex:
             f = open('/tmp/sendmail','w')
             f.write(repr(ex))
             f.close()
@@ -159,7 +159,7 @@ class DC801User(AbstractBaseUser,PermissionsMixin):
 class ResetPasswordCode(models.Model):
 
     id                  = models.AutoField(primary_key=True)
-    user                = models.ForeignKey(DC801User)
+    user                = models.ForeignKey(DC801User,on_delete=models.CASCADE)
     timestamp           = models.PositiveIntegerField()
     used                = models.BooleanField(default=False)
     confirmation_code   = models.CharField(max_length=33, blank=True)
@@ -172,11 +172,13 @@ class ResetPasswordCode(models.Model):
 class Transaction(models.Model):
 
     id              = models.AutoField(primary_key=True)
-    user            = models.ForeignKey(DC801User)
+    user            = models.ForeignKey(DC801User,on_delete=models.CASCADE)
     amount          = models.DecimalField( max_digits=19,decimal_places=2)
     payment_date    = models.DateTimeField(_('payment_date'), default=timezone.now)
     timestamp       = models.PositiveIntegerField()
     success         = models.BooleanField()
+    transaction_id  = models.TextField(null=True)
+    status          = models.TextField(null=True)
 
     def __unicode__(self):  # Python 3: def __str__(self):
         return 'ID: ' +str(self.id) + ' User: '+ str(self.user.first_name) +' '+str(self.user.last_name) + ' Success: ' + str(self.success)  + ' Amount: '+ str(self.amount)
@@ -195,20 +197,40 @@ class BrainTree(models.Model):
     if settings.BRAINTREE_ENVIRONMENT == 'production':
         braintree_environment = braintree.Environment.Production
 
-    braintree.Configuration.configure(braintree_environment,
-                                    merchant_id   = merchant_id,
-                                    public_key    = public_key,
-                                    private_key   = private_key)
+    gateway = braintree.BraintreeGateway(
+        braintree.Configuration(
+            braintree_environment,
+            merchant_id   = merchant_id,
+            public_key    = public_key,
+            private_key   = private_key
+        )
+    )
     
     def __unicode__(self):  # Python 3: def __str__(self):
         return 'nothing here'
 
+    def generate_client_token(self, customer=None):
+        client_data = {}
+
+        if customer:
+            client_data = {
+                "customer_id": customer.id,
+            }
+
+        return self.gateway.client_token.generate(client_data)
+
+    def transact(self, options):
+        return self.gateway.transaction.sale(options)
+
+    def find_transaction(self, id):
+        return self.gateway.transaction.find(id)
+
     def delete_card(self,token):
 
         try:
-            delete_response = braintree.CreditCard.delete(token)
+            delete_response = self.gateway.credit_card.delete(token)
             return delete_response
-        except Exception,ex:
+        except Exception as ex:
             f = open('/tmp/deletecard','w')
             f.write(repr(ex))
             f.close()
@@ -220,9 +242,9 @@ class BrainTree(models.Model):
     def get_subscription(self,subscription_id):
 
         try:
-            subscription = braintree.Subscription.find(subscription_id)
+            subscription = self.gateway.subscription.find(subscription_id)
             return subscription
-        except Exception,ex:
+        except Exception as ex:
             f = open('/tmp/subscription_errors','w')
             f.write(repr(ex))
             f.close()
@@ -232,9 +254,9 @@ class BrainTree(models.Model):
     def cancel_subscription(self,subscription_id):
 
         try:
-            result = braintree.Subscription.cancel(subscription_id)
+            result = self.gateway.subscription.cancel(subscription_id)
             return result
-        except:
+        except Exception as ex:
             f = open('/tmp/subscription_errors','w')
             f.write(repr(ex))
             f.close()
@@ -248,16 +270,10 @@ class BrainTree(models.Model):
         now = timezone.now()
         result = None
         try:
-            result = braintree.Transaction.sale({
+            result = self.gateway.transaction.sale({
 
-                "amount"                : payment['amount'],
-                "credit_card": {
-                    "number"            : payment['account'],
-                    "cvv"               : payment["cvv"],
-                    "expiration_month"  : payment["month"],
-                    "expiration_year"   : payment["year"]
-
-                },
+                "amount": payment['amount'],
+                "payment_method_nonce": payment['nonce'],
                 "customer":{
                     'first_name':user.first_name,
                     'last_name':user.last_name,
@@ -267,26 +283,24 @@ class BrainTree(models.Model):
                     "submit_for_settlement": True,
                 }
             })
+            
+            success = 0
 
             if result.is_success:
-                transaction = Transaction(user = user,
-                                                amount=payment['amount'],
-                                                payment_date=now,
-                                                timestamp=time.time(),
-                                                success=1,
-                                                )
-                transaction.save()
-                return transaction
-            else:
-                transaction = Transaction(user = user,
-                                                amount=payment['amount'],
-                                                payment_date=now,
-                                                timestamp=time.time(),
-                                                success=0
-                                                )
-                transaction.save()
-                return transaction
-        except Exception,ex:
+                success = 1
+
+            transaction = Transaction(
+                transaction_id = result.transaction.id,
+                user = user,
+                amount=payment['amount'],
+                payment_date=now,
+                timestamp=time.time(),
+                success=success,
+                status = result.transaction.status,
+            )
+            transaction.save()
+            return result
+        except Exception as ex:
             f = open('/tmp/payment_errors','w')
             f.write(repr(ex))
             f.close()
@@ -294,71 +308,103 @@ class BrainTree(models.Model):
     def get_braintree_customer(self,customer_id):
 
         try:
-            customer = braintree.Customer.find(customer_id)
+            customer = self.gateway.customer.find(str(customer_id))
             return customer
         except braintree.exceptions.NotFoundError:
             return None
 
-    def addcard_to_customer(self,addcard):
+    def get_plans(self):
         try:
-
-            addcard_request = {
-                        "customer_id"       : addcard['customer_id'],
-                        "number"            : addcard['account'],
-                        "expiration_month"  : addcard["month"],
-                        "expiration_year"   : addcard["year"],
-                        "cvv"               : addcard["cvv"],
-                        "cardholder_name"   : addcard['first_name'] + " " + addcard['last_name'],
-                    }
-
-            f = open('/tmp/addcard_request','a')
-            f.write(repr(addcard_request))
-            f.close()
-          
-
-
-            result = braintree.CreditCard.create(addcard_request) 
-
-            f = open('/tmp/addcard_result','a')
-            f.write(repr(result))
-            f.close()
-          
-
+            result = self.gateway.plan.all()
             return result
         except braintree.exceptions.NotFoundError:
             return None
 
-    def set_subscriptions(self,card_token,plan_id):
-
+    def get_transactions(self, customer_id):
         try:
-            result = braintree.Subscription.create({
-                "payment_method_token": card_token,
-                "plan_id": plan_id
-            })
+            result = self.gateway.transaction.search(
+                braintree.TransactionSearch.customer_id == str(customer_id)
+            )
             return result
         except braintree.exceptions.NotFoundError:
             return None
 
+    def get_payment_method(self, payment_method_token):
+        try:
+            result = self.gateway.payment_method.find(payment_method_token)
+            return result
+        except braintree.exceptions.NotFoundError:
+            return None
 
-    def create_customer(self,customer):
+    def get_subscriptions(self, customer_id):
+        try:
+            result = self.gateway.subscription.search(
+                braintree.SubscriptionSearch.customer_id == str(customer_id)
+            )
+            return result
+        except braintree.exceptions.NotFoundError:
+            return None
 
-        result = braintree.Customer.create({
-            "id": customer['id'],
-            "first_name"    : customer["first_name"],
-            "last_name"     : customer["last_name"],
-            "email"         : customer["email"],
-            "credit_card"   : {
-                "billing_address"   : {
-                                "postal_code"   : customer["postal_code"]
-                                    },
-                "number"            : customer["account"],
-                "expiration_month"  : customer["month"],
-                "expiration_year"   : customer["year"],
-                "cvv"               : customer["cvv"]
+    def set_subscription(self,customer,payment_method_nonce,plan_id,subscription=None):
+
+        try:
+            # if plan changes, we need to clear out the old plan and add a new plan
+            if subscription and plan_id != subscription.plan_id:
+                cancel_result = self.cancel_subscription(subscription.id)
+
+                if cancel_result.is_success or cancel_result.message == 'Subscription has already been canceled.':
+                    subscription = None
+                else:
+                    raise Exception("Unable to update subscription")
+            
+            # create new subscription if there isn't one, or the one on file has been canceled (if payment method is removed, subscription will be canceled)
+            if subscription is None or subscription.status == 'Canceled':
+                result = self.gateway.subscription.create({
+                    # "payment_method_token": token_result.payment_method.token,
+                    "payment_method_nonce": payment_method_nonce,
+                    "plan_id": plan_id,
+                })
+            else:
+                result = self.gateway.subscription.update(subscription.id, {
+                    "payment_method_nonce": payment_method_nonce,
+                })
+            
+            return result
+        except braintree.exceptions.NotFoundError:
+            pass
+
+        return None
+
+    def create_customer(self, user, payment_method_nonce=None):
+
+        customer_data = {
+            "id": str(user.id),
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "email": user.email,   
+        }
+
+        # associate a payment method with customer
+        if payment_method_nonce:
+            customer_data["payment_method_nonce"] = payment_method_nonce
+
+        return self.gateway.customer.create(customer_data)
+
+    def create_payment_method(self, user, payment_method_nonce):
+
+        data = {
+            "customer_id": str(user.id),
+            "payment_method_nonce": payment_method_nonce,
+        }
+
+        return self.gateway.payment_method.create(data)
+
+    def set_default_payment_method(self, token):
+
+        data = {
+            "options": {
+                "make_default": True
             }
-        })
+        }
 
-        if result.is_success:
-            return result
-        else:
-            return None
+        return self.gateway.payment_method.update(token, data)

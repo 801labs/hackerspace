@@ -195,11 +195,15 @@ class ResetPasswordForm(forms.Form):
     
 
 class LoginForm(forms.Form):
-    email = forms.CharField(label='Email',widget=forms.TextInput(attrs={'size':'35'}),max_length=254)
+    email = forms.CharField(
+        label='Email',
+        widget=forms.TextInput(attrs={'size':'35', 'class':'form-control'}),
+        max_length=254
+    )
 
     password = forms.CharField(
           label='Password',
-          widget=forms.PasswordInput(attrs={'size':'35'}),
+          widget=forms.PasswordInput(attrs={'size':'35', 'class':'form-control'}),
           max_length=254
     )
 
@@ -229,6 +233,7 @@ class DC801UserChangeForm(UserChangeForm):
 
     class Meta:
         model = DC801User
+        fields = '__all__'
 
 #metacortex prform below
 

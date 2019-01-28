@@ -6,61 +6,69 @@
    
 {% block content %}
 <div align="left"> 
+  <p>We ask if possible that you use the subscription page to setup automatic monthly reoccuring membership payments.</p>
+  <p>All card information will be sent directly to braintreepayments.com and no credt card data is stored on this site.</p>
+  <p>Please refer to braintree's pci faq for more information.</p>
+  <p><a href='https://www.braintreepayments.com/faq'>https://www.braintreepayments.com/faq</a></p>
+  <p>All payments will show up as 801 LABS 385-313-0801</p>
+  <p><h3>Refund Policy:</h3> Currently we do not issue refunds, but if you do have an issue with your payment please call (385) 313-0801 and leave a voicemail.</p>
 
+  {% if message %}
+    <div class="alert alert-danger">{{message}}</div>
+  {% endif %}
 
-<p>We ask if possible that you use the subscription page to setup automatic monthly reoccuring membership payments.</p>
-<p>All card information will be sent directly to braintreepayments.com and no credt card data is stored on this site.</p>
-<p>Please refer to braintree's pci faq for more information.</p>
-<p><a href='https://www.braintreepayments.com/faq'>https://www.braintreepayments.com/faq</a></p>
-<p>All payments will show up as 801 LABS 385-313-0801</p>
-<p><h3>Refund Policy:</h3> Currently we do not issue refunds, but if you do have an issue with your payment please call (385) 313-0801 and leave a voicemail.</p>
+  <form action="/payment/" method="POST" id="braintree-payment-form">
+    {% csrf_token %}
 
+    <div class="form-group">
+      <label for="payment-select">Amount: </label>
 
-<p></h2>Payment Status:</h2></p>
-
-<p></h2><strong><div class="alert alert-danger">{{message}}</div></strong></h2></p>
-    <div>
-      <form action="/payment/" method="POST" id="braintree-payment-form">
-        {% csrf_token %}
-        <p>
-            <label>Amount: </label>
-          <!--  <input type="text" size="7" autocomplete="off" name='amount'/> -->
-          <select name="payment_level">
-              <option value="1">Member $50.00</option>
-              <option value="5">Supporter $25.00</option>
-              <option value="2">Root $75.00</option>
-              <option value="3">Super Root $100.00</option>
-              <option value="4">Super Duper Supporter $200.00</option>
-              <option value="6">Member half a Year $300.00</option>
-              <option value="7">Member full Year $600.00</option>
-              <option value="8">Root half a Year $450.00</option>
-              <option value="9">Root full Year $900.00</option>
-            </select> 
-        </p>
-
-        <p>
-          <label>Card Number: </label>
-          <input type="text" size="20" autocomplete="off" data-encrypted-name="number" />
-        </p>
-        <p>
-          <label>CVV: </label>
-          <input type="text" size="4" autocomplete="off" data-encrypted-name="cvv" />
-        </p>
-        <p>
-          <label>Expiration (MM/YYYY)</label>
-          <input type="text" size="2" name="month" /> / <input type="text" size="4" name="year" />
-          </p>
-          <p>
-          <label>Payment Notes</label>
-          <textarea cols="40" rows="5" name="myname"></textarea>
-          </p>
-        <input type="submit" id="submit" value = 'Submit' />
-      </form>
+      <select id="payment-select" name="payment_level" class="form-control" required>
+        <option></option>
+        <option value="1">Member $50.00</option>
+        <option value="5">Supporter $25.00</option>
+        <option value="2">Root $75.00</option>
+        <option value="3">Super Root $100.00</option>
+        <option value="4">Super Duper Supporter $200.00</option>
+        <option value="6">Member half a Year $300.00</option>
+        <option value="7">Member full Year $600.00</option>
+        <option value="8">Root half a Year $450.00</option>
+        <option value="9">Root full Year $900.00</option>
+      </select> 
     </div>
-    <script src="https://js.braintreegateway.com/v1/braintree.js"></script>
-    <script>
-      var braintree = Braintree.create("{{client_side_key}}");
-      braintree.onSubmitEncryptForm('braintree-payment-form');
-    </script>
+
+    <div class="form-group">
+      <div class="bt-drop-in-wrapper">
+        <div id="bt-dropin"></div>
+      </div>
+    </div>
+
+    <input type="hidden" id="nonce" name="payment_method_nonce" />
+
+    <input type="submit" id="submit-button" value='Submit Payment' class="pull-right btn btn-default" />
+  </form>
 </div>
+
+<script src="https://js.braintreegateway.com/web/dropin/1.14.1/js/dropin.min.js"></script>
+<script>
+  var form = document.querySelector('#braintree-payment-form');
+  var client_token = '{{ client_token }}';
+  braintree.dropin.create({
+    authorization: client_token,
+    container: '#bt-dropin',
+  }, function (createErr, instance) {
+    form.addEventListener('submit', function (event) {
+      event.preventDefault();
+      instance.requestPaymentMethod(function (err, payload) {
+        if (err) {
+          console.log('Error', err, payload);
+          return;
+        }
+        // Add the nonce to the form and submit
+        document.querySelector('#nonce').value = payload.nonce;
+        form.submit();
+      });
+    });
+  });
+</script>
 {% endblock %}

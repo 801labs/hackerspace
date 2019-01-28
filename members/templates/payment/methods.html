@@ -1,0 +1,137 @@
+{% extends "members/base.html" %}
+{% load humanize %}
+
+{% block title %} Members Site{% endblock %}
+{% block head %}  Members Site{% endblock %}
+
+{% block content %}
+
+<h1>Payment Methods</h1>
+
+<hr>
+
+{% for card in cards %}
+    <form action="/payment/methods/" method="POST">
+        {% csrf_token %}
+
+        <input name="card" value="{{card.token}}" type="hidden">
+
+        <div class="row">
+            <div class="col-sm-8">
+                <img src="{{card.image_url}}" alt="{{card.card_type}}">
+                
+                &nbsp; &nbsp;
+
+                Card: {{card.last_4}}
+
+                &nbsp; &nbsp;
+
+                Expires: <small>{{card.expiration_month}}/{{card.expiration_year}}</small>
+            </div>
+
+            <div class="col-sm-4 text-right">
+                {% if not card.default %}
+                    <button type="submit" class="btn btn-success" name="action" value="default">Make Default</button>
+                {% else %}
+                    Default &nbsp; &nbsp;
+                {% endif %}
+
+                <button type="submit" class="btn btn-danger" name="action" value="remove">Remove</button>
+            </div>
+        </div>
+        
+        {% if card.subscriptions|length %}
+            <br>
+            <div class="alert alert-warning">Removing this payment method will cancel any active or pending subscriptions linked to it</div>
+
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                    <tr>
+                        <th scope="col">Subscription</th>
+                        <th scope="col">Created</th>
+                        <th scope="col">Plan</th>
+                        <th scope="col">Next Billing Cycle</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for subscription in card.subscriptions reversed %}
+                        {% if subscription.transactions|length or subscription.status != 'Canceled' %}
+                            <tr>
+                                <td>
+                                    {{subscription.status}}
+                                    <div class="help-block">
+                                        {{subscription.id}}
+                                        {% if subscription.id == user.subscription_code %}
+                                            <input name="remove_user_subscription" value="{{subscription.id}}" type="hidden">
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td nowrap>{{subscription.created_at|date}}</td>
+                                <td>{{subscription.plan_id}}</td>
+                                <td>
+                                    ${{subscription.next_billing_period_amount}}
+                                    on
+                                    {{subscription.next_billing_date}}
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="4" class="text-center">No active or pending subscriptions exist for this card</td>
+                            </tr>
+                        {% endif %}
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+    </form>
+    <hr>
+{% endfor %}
+
+<h3>Add Payment Method</h3>
+
+<div class="row">
+    <div class="col-xs-12">
+        <form action="/payment/methods/" method="POST" id="braintree-subscribe-form">
+            {% csrf_token %}
+
+            <input name="action" value="add" type="hidden">
+
+            <div class="form-group">
+                <div class="bt-drop-in-wrapper">
+                    <div id="bt-dropin"></div>
+                </div>
+            </div>
+
+            <input type="hidden" id="nonce" name="payment_method_nonce" />
+
+            <input class="btn btn-default pull-right" type="submit"  value="Add Payment Method" />
+        </form>
+    </div>
+</div>
+
+<script src="https://js.braintreegateway.com/web/dropin/1.14.1/js/dropin.min.js"></script>
+<script>
+var form = document.querySelector('#braintree-subscribe-form');
+var client_token = '{{ client_token }}';
+braintree.dropin.create({
+    authorization: client_token,
+    container: '#bt-dropin',
+}, function (createErr, instance) {
+    form.addEventListener('submit', function (event) {
+    event.preventDefault();
+    instance.requestPaymentMethod(function (err, payload) {
+        if (err) {
+        console.log('Error', err);
+        return;
+        }
+        // Add the nonce to the form and submit
+        document.querySelector('#nonce').value = payload.nonce;
+        form.submit();
+    });
+    });
+});
+</script>
+
+{% endblock %}

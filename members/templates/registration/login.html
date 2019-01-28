@@ -4,16 +4,27 @@
 {% block head %}User Login{% endblock %}
 
 {% block content %}
-<div align="left"> 
-   <p>{{ message }}</p>
-  <form method="post" action="/login/">
-    {% csrf_token %}
-    <p><label for="id_username">Email: </label>{{ form.email }}</p>
-    <p><label for="id_password">Password: </label>{{ form.password }}</p>
-    <input type="hidden" name="next" value="/" />
-    <input type="submit" value="Login" />
-</form>
-    <br/>
-    <p>Forgot your password ? Click <a href="/reset">Here</a></p>
+<div class="row">
+    <div class="col-sm-6 col-sm-offset-3">
+        <p>{{ message }}</p>
+        <form method="post" action="/login/">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="id_username">Email: </label>
+                {{ form.email }}
+            </div>
+            <div class="form-group">
+                <label for="id_password">Password: </label>
+                {{ form.password }}
+            </div>
+            <input type="hidden" name="next" value="/" />
+
+            <div class="text-right">
+                <a href="/reset">Forgot your password?</a>
+                &nbsp; &nbsp;
+                <button type="submit" class="btn btn-default">Login</button>
+            </div>
+        </form>
+    </div>
 </div>
 {% endblock %}

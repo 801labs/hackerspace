@@ -1,0 +1,58 @@
+{% extends "members/base.html" %}
+{% load humanize %}
+
+{% block title %} Members Site{% endblock %}
+{% block head %}  Members Site{% endblock %}
+
+{% block content %}
+
+
+{% if transactions|length > 0  %}
+    <h1>Payment History</h1>
+    
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+            <tr>
+                <th scope="col">Transaction</th>
+                <th scope="col">Date</th>
+                <th scope="col">Description</th>
+                <th scope="col">Card</th>
+                <th scope="col" class="text-right">Amount</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for transaction in transactions %}
+                <tr>
+                    <td>
+                        {{transaction.id}}
+                        <div class="help-block">{{transaction.status}}</div>
+                    </td>
+                    <td>{{transaction.created_at|date}}</td>
+                    <td>
+                        {% if transaction.plan_id %}
+                            Plan: {{transaction.plan_id}}
+                        {% else %}
+                            Single payment
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% with card=transaction.credit_card_details %}
+                            <img src="{{card.image_url}}" alt="{{card.card_type}}">
+                        
+                            &nbsp; &nbsp;
+
+                            Card: {{card.last_4}}
+                        {% endwith %}
+                    </td>
+                    <td class="text-right">${{transaction.amount}}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% else %}
+    <div class="alert alert-warning text-center">No payments have been made for this account</div>
+{% endif %}
+
+{% endblock %}

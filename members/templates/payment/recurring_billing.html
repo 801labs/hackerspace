@@ -1,36 +1,14 @@
 {% extends "members/base.html" %}
+{% load humanize %}
 
 {% block title %} Members Site{% endblock %}
 {% block head %}  Members Site{% endblock %}
 
 {% block content %}
 
- <script>
-     function delete_card(token){
-            console.log(token);
-
-            var input = document.createElement("input");
-            input.setAttribute("type", "hidden");
-            input.setAttribute("name", "delete_token");
-            input.setAttribute("value", token);
-
-            //append to form element that you want .
-            document.getElementById("braintree-subscribe-form").appendChild(input);
-
-
-            document.getElementById("braintree-subscribe-form").subscribe_method.value = 'delete_card';
-            console.log(document.getElementById("braintree-subscribe-form").subscribe_method);
-            document.getElementById("braintree-subscribe-form").submit();
-    }
-
-
-  </script>
-
-
-
 {% if info_messages != None %}
     {% for info_message in info_messages %}
-    <div class="alert alert-info" style="width:800px;">
+    <div class="alert alert-info">
         {{info_message}}
     </div>
     {% endfor %}
@@ -39,7 +17,7 @@
 {% if success_messages != None %}
 
     {% for success_message in success_messages %}
-    <div class="alert alert-success" style="width:800px;">
+    <div class="alert alert-success">
         {{success_message}}
     </div>
     {%endfor%}
@@ -48,7 +26,7 @@
 {% if error_messages != None  %}
 
     {% for error_message in error_messages %}
-    <div class="alert alert-warning" style="width:800px;">
+    <div class="alert alert-warning">
         {{error_message}}
     </div>
     {% endfor%}
@@ -56,134 +34,137 @@
 {% endif %}
 
 <h1>801 Labs Recurring Membership Plans</h1>
-<p>Please note that payments will be deducted on the 26th of every month.</p>
+<p>Please note that payments for all monthly plans will be deducted on the 26th of each month.</p>
+<p>Yearly plans are billed immediately and will renew 12 months from when they were last charged.</p>
+
+<hr>
+<div class="">
+    <a class="btn btn-link btn-lg" href="/payment/methods/">Manage Payment Methods</a>
+    <a class="btn btn-link btn-lg" href="/payment/history/">Payment History</a>
+</div>
+
 {% if subscription != None  %}
-    <div class="alert alert-info" style="width:800px;">
+    <hr>
+    <div class="alert {% if subscription.status == 'Pending' %}alert-warning{% elif subscription.status == 'Canceled' %}alert-danger{% else %}alert-info{% endif %}">
+        <h3>
+            Current Plan
+            <br>
+            <small>{{subscription.status}}</small>
+        </h3>
+        <div class="row">
+            <div class="col-sm-6">
+                <div>Plan: <strong>{{subscription.plan_id}}</strong></div>
+                <div>Created <strong>{{subscription.created_at|naturaltime}}</strong></div>
+                <div>Payment Amount: <strong>${{subscription.next_billing_period_amount}}</strong></div>
+                <div>Next Billing Date: <strong>{{subscription.next_billing_date}}</strong></div>
+            </div>
+            
+            {% if payment_method %}
+                <div class="col-sm-6">
+                    <br>
+                    <img src="{{payment_method.image_url}}" alt="{{payment_method.card_type}}">
+                
+                    &nbsp; &nbsp;
 
-        <p align='center'>Current Plan</p>
-        <table align='center' >
-            <tr>
-            <td>
-                <p> Plan : <b>{{subscription.plan_id}}</b>
-                Payment Amount: <b>${{subscription.next_billing_period_amount}}</b>
-                Next Billing Date: <b>{{subscription.next_billing_date}}</b>
-                </p>
-            </td>
-            <td align='right'>
+                    Card: {{payment_method.last_4}}
 
+                    &nbsp; &nbsp;
+                
+                    Expires: {{payment_method.expiration_month}}/{{payment_method.expiration_year}}
+                </div>
+            {% endif %}
+
+            <div class="col-xs-12 text-right">
+                <hr>
                 <form action="/subscriptions/" method="POST" id="braintree-cancel-subscription-form">
                     {% csrf_token %}
                     <input type="hidden" name="method" value="cancel">
-                    <input type="submit" class="btn btn-danger" value='Cancel'>
+                    <input type="submit" class="btn btn-danger" value='Cancel Payment'>
                 </form>
-            </td>
-            </tr>
-        </table>
+            </div>
+        </div>
     </div>
-    {% endif %}
+{% endif %}
 
+<hr>
 
-    {% if plans != None  %}
-
-
-    
-    <div style="width:800px;">
-
-    <table class="table table-striped" align="center">
-        <tr>
-            <th>Plan Name</th>
-            <th>Plan Price</th>
-            <th>Plan Description</th>
-        </tr>
+{% if plans != None  %}
+    <div class="table-responsive">
+        <table class="table table-striped" align="center">
+            <thead>
+            <tr>
+                <th scope="col">Plan Name</th>
+                <th scope="col" nowrap>Plan Price</th>
+                <th scope="col">Plan Description</th>
+            </tr>
+            </thead>
+            <tbody>
             {% for plan in plans %}
-            <tr><td>{{plan.name}}</td><td>${{plan.price}}</td><td>{{plan.description}}</td></tr>
+                <tr>
+                    <td>{{plan.name}}</td>
+                    <td>${{plan.price}}</td>
+                    <td>{{plan.description}}</td>
+                </tr>
             {% endfor %}
+            </tbody>
         </table>    
     </div>
-    {% endif %}
+{% endif %}
  
-    {% if cards != None %}
-    <br/>
-    <h2>Stored Cards</h2>
-    <form action="/subscriptions/" method="POST" id="braintree-subscribe-form">
+{% if subscription is None  %}
+<h2>Add Plan</h2>
+{% else %}
+<h2>Update Plan</h2>
+{% endif %}
+<form action="/subscriptions/" method="POST" id="braintree-subscribe-form">
+    {% csrf_token %}
 
-        <input type="hidden" name="method" value="subscribe" id="subscribe_method"/>
-
-        <div style="width:400px;">
-        <table class="table table-responsive" >
-            <tr>
-            <th>Select Card For Subscription</th>
-            <th>Remove Card</th>
-            </tr>
-        
-            {% csrf_token %}
-            {% for token in cards %}
-            <tr>
-                <td><input type="radio" name="card_token" value="{{token.token}}"> {{token.card_type}} {{token.last_4}}</td>
-                <td><input type="button" name="delete_token" value="Delete" onClick="delete_card('{{token.token}}');"></br></td>
-            </tr>
+    <input type="hidden" name="method" value="{% if subscription is None %}subscribe{% else %}update{% endif %}" id="subscribe_method"/>
+    
+    <div class="form-group">
+        <label for="subscription-select">Plan Level</label>
+        <select value="subscription-select" name="plan_id" class="form-control" required>
+            <option></option>
+            {% for plan in plans %}
+                <option value="{{plan.id}}" {% if subscription.plan_id == plan.id %}selected{% endif %}>
+                    {{plan.name}} ${{plan.price}}{% if plan.billing_frequency == 1 %}/month{% elif plan.billing_frequency == 12 %}/year{% else %} every {{plan.billing_frequency}} months{% endif %}
+                </option>
             {% endfor %}
-            <tr><td>
-        </table>
+        </select>
+    </div>
 
-        <h2>Set Subscription</h2>
-            <table class="table table-responsive">
-            {%if plans != None %}
-               <select name="plan_id" class="form-control">
-                {% for plan in plans %}
-                <option value="{{plan.id}}">{{plan.name}} {{plan.price}}</option>
-                {% endfor %}
-                </select>
-                {%endif%}
-                </td>
-
-                <td><input class="submit-button" type="submit"  value="Subscribe" /></td>
-            </tr>
-        </table>
-        </br>
+    <div class="form-group">
+        <div class="bt-drop-in-wrapper">
+            <div id="bt-dropin"></div>
         </div>
-     
-        </form>
+    </div>
 
-    {% endif %}
+    <input type="hidden" id="nonce" name="payment_method_nonce" />
 
-    <form action="/subscriptions/" method="POST" id="braintree-payment-form">
+    <input class="btn btn-default pull-right" type="submit"  value="Subscribe" />
+</form>
 
-     <input type="hidden" name="method" value="addcard">
-        {% csrf_token %}
-    <h2>Add Card To Stored Cards</h2>
-      <p>
-        <label>First Name</label>
-        <input type="text" name="first_name" id="first_name">
-      </p>
-      <p>
-        <label for="last_name">Last Name</label>
-        <input type="text" name="last_name" id="last_name">
-      </p>
-      <p>
-        <label for="postal_code">Postal Code</label>
-        <input type="text" name="postal_code" id="postal_code">
-      </p>
-      <p>
-        <label>Card Number</label>
-        <input type="text" size="20" autocomplete="off" data-encrypted-name="account" />
-      </p>
-      <p>
-        <label>CVV</label>
-        <input type="text" size="4" autocomplete="off" data-encrypted-name="cvv" />
-      </p>
-      <p>
-        <label>Expiration (MM/YYYY)</label>
-        <input type="text" size="2" data-encrypted-name="month" /> / <input type="text" size="4" data-encrypted-name="year" />
-      </p>
-      <input class="submit-button" type="submit" value="Add Card" />
-    </form>
-    <script src="https://js.braintreegateway.com/v1/braintree.js"></script>
-    <script>
-      var braintree = Braintree.create("{{client_side_key}}");
-      braintree.onSubmitEncryptForm("braintree-payment-form");
-  </script>
-
-
+<script src="https://js.braintreegateway.com/web/dropin/1.14.1/js/dropin.min.js"></script>
+<script>
+var form = document.querySelector('#braintree-subscribe-form');
+var client_token = '{{ client_token }}';
+braintree.dropin.create({
+    authorization: client_token,
+    container: '#bt-dropin',
+}, function (createErr, instance) {
+    form.addEventListener('submit', function (event) {
+    event.preventDefault();
+    instance.requestPaymentMethod(function (err, payload) {
+        if (err) {
+        console.log('Error', err);
+        return;
+        }
+        // Add the nonce to the form and submit
+        document.querySelector('#nonce').value = payload.nonce;
+        form.submit();
+    });
+    });
+});
+</script>
 
 {% endblock %}
