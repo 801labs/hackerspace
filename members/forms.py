@@ -1,7 +1,7 @@
 import re
 from django import forms as forms
 from django.contrib.auth.models import User
-#from captcha.fields import ReCaptchaField
+#from captcha.fields import ReCaptchaField    
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
@@ -11,7 +11,7 @@ from django.contrib.admin.widgets import AdminDateWidget  #added by metacortex
 textInputAttrs = {'size':'35', 'class':'form-control'}
 
 class RegistrationForm(forms.Form):
-
+    
     handle  = forms.CharField(label='Handle',widget=forms.TextInput(attrs=textInputAttrs), max_length=40)
 
     password1 = forms.CharField(
@@ -28,13 +28,14 @@ class RegistrationForm(forms.Form):
     phone_number    = forms.CharField(label='Phone Number',widget=forms.TextInput(attrs=textInputAttrs),max_length=11,help_text = "<p>Please format the phone number as 1801NXXNXXX <br/>(remember to put the 1 before the area code)</p>")
     first_name      = forms.CharField(label='First Name',widget=forms.TextInput(attrs=textInputAttrs),max_length=254)
     last_name       = forms.CharField(label='Last Name',widget=forms.TextInput(attrs=textInputAttrs),max_length=254)
-
+    
     #OPTIONS = (
     #        ("1", "TheTransistor: Orem"),
     #        ("2", "TheTransistor: SLC"),
     #        )
 
-    #primary_hacker_space = forms.ChoiceField(widget=forms.RadioSelect, choices=OPTIONS)
+    #primary_hacker_space = forms.ChoiceField(widget=forms.RadioSelect,
+    #                                         choices=OPTIONS)
 
     #emergency_contact_name      = forms.CharField(max_length='254',label='Emergency Contact Name')
     #emergency_contact_phone     = forms.CharField(max_length='11',label='Emergency Contact Phone Number')
@@ -70,7 +71,7 @@ class RegistrationForm(forms.Form):
         if not re.search(r'^[a-zA-Z]+(([\'\,\.\- ][a-zA-Z ])?[a-zA-Z]*)*$', first_name):
             raise forms.ValidationError('First Name contains invalid characters.')
         return first_name
-
+     
 
     def clean_last_name(self):
         last_name = self.cleaned_data['last_name']
@@ -101,7 +102,7 @@ class RegistrationForm(forms.Form):
       if 'password1' in self.cleaned_data:
         password1 = self.cleaned_data['password1']
         password2 = self.cleaned_data['password2']
-
+        
         if password1 == password2:
 
             valid_password = True
@@ -139,7 +140,7 @@ class ResetForm(forms.Form):
     email = forms.CharField(label='Email',widget=forms.TextInput(attrs=textInputAttrs),max_length=254)
 
 class ResetPasswordForm(forms.Form):
-
+    
     reset_code = forms.CharField(required=False, max_length=50,widget=forms.HiddenInput())
 
     new_password1 = forms.CharField(
@@ -159,7 +160,7 @@ class ResetPasswordForm(forms.Form):
 
             password1 = self.cleaned_data['new_password1']
             password2 = self.cleaned_data['new_password2']
-
+        
             if password1 == password2:
 
                 valid_password = True
@@ -193,7 +194,7 @@ class ResetPasswordForm(forms.Form):
         raise forms.ValidationError('Passwords do not match.')
 
 
-
+    
 
 class LoginForm(forms.Form):
     email = forms.CharField(
@@ -255,7 +256,7 @@ class PRForm(forms.Form):
     def clean_description(self):
         description = self.cleaned_data['description'].strip()
         return description
-
+     
     def clean_notes(self):
         notes = self.cleaned_data['notes'].strip()
 
@@ -268,17 +269,13 @@ class PRForm(forms.Form):
 
 """   def clean_date(self):
         date = self.cleaned_data['date']
-        print date
-
+        print date 
         if not re.search(r'^\w+$', date):
             raise forms.ValidationError('Date is invalid.')
         return date
-
     def clean_time(self):
         time = self.cleaned_data['time']
-
         if not re.search(r'^\w+$', time):
             raise forms.ValidationError('Time is invalid.')
-
         return time
 """
