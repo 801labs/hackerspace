@@ -154,7 +154,7 @@ def payment_history(request):
     braintree_transactions = braintree_model.get_transactions(request.user.id)
 
     page_data = {
-        'transactions'      : braintree_transactions.items,
+        'transactions'      : list(braintree_transactions.items),
     }
 
     return render(request, 'payment/history.html', page_data)
