@@ -8,24 +8,26 @@ from django.core.exceptions import ValidationError
 from members.models import DC801User
 from django.contrib.admin.widgets import AdminDateWidget  #added by metacortex
 
+textInputAttrs = {'size':'35', 'class':'form-control'}
+
 class RegistrationForm(forms.Form):
     
-    handle  = forms.CharField(label='Handle',widget=forms.TextInput(attrs={'size':'35'}), max_length=40)
+    handle  = forms.CharField(label='Handle',widget=forms.TextInput(attrs=textInputAttrs), max_length=40)
 
     password1 = forms.CharField(
       label='Password',
-      widget=forms.PasswordInput(attrs={'size':'35'})
-      ,help_text = '<br/><p>Password must contain at least one lower chracter, </br>one uppercase character, at least one number, at least one special charater,</br> and be longer than eight charaters.</p>'
+      widget=forms.PasswordInput(attrs=textInputAttrs)
+      ,help_text = '<p>Password must contain at least one lower chracter, one uppercase character, at least one number, at least one special charater, and be longer than eight charaters.</p>'
     )
     password2 = forms.CharField(
       label='Password (Again)',
-      widget=forms.PasswordInput(attrs={'size':'35'})
+      widget=forms.PasswordInput(attrs=textInputAttrs)
     )
 
-    email           = forms.EmailField(label='Email',widget=forms.TextInput(attrs={'size':'35'}), max_length=254)
-    phone_number    = forms.CharField(label='Phone Number',widget=forms.TextInput(attrs={'size':'11'}),max_length=11,help_text = "<p>Please format the phone number as 1801NXXNXXX <br/>(remember to put the 1 before the area code)</p>")
-    first_name      = forms.CharField(label='First Name',widget=forms.TextInput(attrs={'size':'35'}),max_length=254)
-    last_name       = forms.CharField(label='Last Name',widget=forms.TextInput(attrs={'size':'35'}),max_length=254)
+    email           = forms.EmailField(label='Email',widget=forms.TextInput(attrs=textInputAttrs), max_length=254)
+    phone_number    = forms.CharField(label='Phone Number',widget=forms.TextInput(attrs=textInputAttrs),max_length=11,help_text = "<p>Please format the phone number as 1801NXXNXXX <br/>(remember to put the 1 before the area code)</p>")
+    first_name      = forms.CharField(label='First Name',widget=forms.TextInput(attrs=textInputAttrs),max_length=254)
+    last_name       = forms.CharField(label='Last Name',widget=forms.TextInput(attrs=textInputAttrs),max_length=254)
     
     #OPTIONS = (
     #        ("1", "TheTransistor: Orem"),
@@ -135,7 +137,7 @@ class RegistrationForm(forms.Form):
 
 
 class ResetForm(forms.Form):
-    email = forms.CharField(label='Email',widget=forms.TextInput(attrs={'size':'35'}),max_length=254)
+    email = forms.CharField(label='Email',widget=forms.TextInput(attrs=textInputAttrs),max_length=254)
 
 class ResetPasswordForm(forms.Form):
     
@@ -143,13 +145,13 @@ class ResetPasswordForm(forms.Form):
 
     new_password1 = forms.CharField(
       label='Password',
-      widget=forms.PasswordInput(attrs={'size':'35'})
+      widget=forms.PasswordInput(attrs=textInputAttrs)
       ,help_text = '<br/><p>Password must contain at least one lower chracter, </br>one uppercase character, at least one number, at least one special charater,</br> and be longer than eight charaters.</p>'
     )
 
     new_password2 = forms.CharField(
       label='Password (Again)',
-      widget=forms.PasswordInput(attrs={'size':'35'})
+      widget=forms.PasswordInput(attrs=textInputAttrs)
     )
 
     def clean_new_password2(self):
@@ -197,13 +199,13 @@ class ResetPasswordForm(forms.Form):
 class LoginForm(forms.Form):
     email = forms.CharField(
         label='Email',
-        widget=forms.TextInput(attrs={'size':'35', 'class':'form-control'}),
+        widget=forms.TextInput(attrs=textInputAttrs),
         max_length=254
     )
 
     password = forms.CharField(
           label='Password',
-          widget=forms.PasswordInput(attrs={'size':'35', 'class':'form-control'}),
+          widget=forms.PasswordInput(attrs=textInputAttrs),
           max_length=254
     )
 
@@ -239,11 +241,11 @@ class DC801UserChangeForm(UserChangeForm):
 
 class PRForm(forms.Form):
 
-    handle      = forms.CharField(label='Handle',widget=forms.TextInput(attrs={'size':'35'}),max_length=254)
+    handle      = forms.CharField(label='Handle',widget=forms.TextInput(attrs=textInputAttrs),max_length=254)
     date        = forms.CharField(label='Date',widget = AdminDateWidget)
-    time        = forms.CharField(label='Time',widget=forms.TextInput(attrs={'size':'7'}),max_length=7)
+    time        = forms.CharField(label='Time',widget=forms.TextInput(attrs=textInputAttrs),max_length=7)
     reoccuring  = forms.BooleanField(label='Reoccuring',required=False)
-    event       = forms.CharField(label='Event', widget=forms.TextInput(attrs={'size':'35'}),max_length=256)
+    event       = forms.CharField(label='Event', widget=forms.TextInput(attrs=textInputAttrs),max_length=256)
     description = forms.CharField(label='Description', widget=forms.Textarea(attrs={'rows':'5'}), max_length=5000)
     notes       = forms.CharField(label='Notes', widget=forms.Textarea(attrs={'rows':'3'}), max_length=5000,required=False)
 
@@ -268,21 +270,12 @@ class PRForm(forms.Form):
 """   def clean_date(self):
         date = self.cleaned_data['date']
         print date 
-
         if not re.search(r'^\w+$', date):
             raise forms.ValidationError('Date is invalid.')
         return date
-
     def clean_time(self):
         time = self.cleaned_data['time']
-
         if not re.search(r'^\w+$', time):
             raise forms.ValidationError('Time is invalid.')
-
         return time
 """
- 
-
- 
-
-
