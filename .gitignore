@@ -6,3 +6,6 @@ hackerspace/settings.py
 *.sqlite3
 
 public
+
+
+.DS_Store
