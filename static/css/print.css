@@ -1,0 +1,8 @@
+@media print {
+  .print {
+  	display: none;
+  }
+  .container {
+    padding: 0 24px;
+  }
+}
