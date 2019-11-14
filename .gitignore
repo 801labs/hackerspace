@@ -8,3 +8,6 @@ hackerspace/settings.py
 public
 
 .DS_Store
+
+gunicorn_start
+logs/*

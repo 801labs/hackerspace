@@ -126,7 +126,7 @@
         <select value="subscription-select" name="plan_id" class="form-control" required>
             <option></option>
             {% for plan in plans %}
-                <option value="{{plan.id}}" {% if subscription.plan_id == plan.id %}selected{% endif %}>
+                <option value="{{plan.id}}" {% if subscription and subscription.plan_id == plan.id %}selected{% endif %}>
                     {{plan.name}} ${{plan.price}}{% if plan.billing_frequency == 1 %}/month{% elif plan.billing_frequency == 12 %}/year{% else %} every {{plan.billing_frequency}} months{% endif %}
                 </option>
             {% endfor %}
