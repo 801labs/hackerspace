@@ -1,5 +1,5 @@
 braintree==3.51.0
-certifi==2018.11.29
+certifi==2022.12.7
 chardet==3.0.4
 Django==2.1.11
 idna==2.8
